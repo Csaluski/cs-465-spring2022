@@ -1,3 +1,3 @@
 public enum MessageType {
-    JOIN, LEAVE, NODE
+    JOIN, LEAVE, NOTES
 }
