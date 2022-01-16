@@ -12,9 +12,10 @@ public class Server extends Thread{
     }
 
     private void sendMessage(String message) {
-        for(int i=0;i<ServerThread.nodeList.size();i++) {
+        System.out.println(message);
+        for (NodeInfo key : ServerThread.nodeList.keySet()) {
             try {
-                Socket socket = new Socket(ServerThread.nodeList.get(i).getAddress(), ServerThread.nodeList.get(i).getPort());
+                Socket socket = ServerThread.nodeList.get(key); 
                 DataOutputStream out = new DataOutputStream(socket.getOutputStream());
                 out.writeUTF(message);
             } catch(IOException e) {
@@ -25,11 +26,11 @@ public class Server extends Thread{
     }
 
     public void run() {
+        
         ObjectInputStream fromClient = null;
         DataOutputStream toClient = null;
 
         Message messageFromClient = null;
-        int state = 0;
         boolean keepGoing = true;
 
         // first get the streams
@@ -37,7 +38,7 @@ public class Server extends Thread{
             fromClient = new ObjectInputStream(clientSocket.getInputStream());
             toClient = new DataOutputStream(clientSocket.getOutputStream());
         } catch (IOException e) {
-            System.err.println("Error opening network streams");
+            System.err.println("Error opening network streams (Server)");
             return;
         }
 
@@ -46,18 +47,28 @@ public class Server extends Thread{
             try {
                 messageFromClient = (Message) fromClient.readObject();
                 switch(messageFromClient.type()) {
-                    case JOIN:
-                        System.out.println("Joined");
-                        ServerThread.nodeList.add((NodeInfo) messageFromClient.contents());
-                        break;
-                    case LEAVE:
-                        System.out.println("Left");
-                        ServerThread.nodeList.remove((NodeInfo) messageFromClient.contents());
+                    case SHOTDOWN:
+                        NodeInfo nodeInfo = (NodeInfo) messageFromClient.contents();
+                        System.out.println(nodeInfo.getName() + " SHOTDOWN");
                         keepGoing = false;
                         break;
+                    case SHOTDOWN_ALL:
+                        keepGoing = false;
+                        sendMessage("SHOTDOWN_ALL");
+                        break;
+                    case JOIN:
+                        NodeInfo nodeInfo = (NodeInfo) messageFromClient.contents();
+                        ServerThread.nodeList.put(nodeInfo, clientSocket);
+                        sendMessage(nodeInfo.getName() + " joined chat.");
+                        break;
+                    case LEAVE:
+                        NodeInfo nodeInfo = (NodeInfo) messageFromClient.contents();
+                        ServerThread.nodeList.remove(nodeInfo);
+                        sendMessage(nodeInfo.getName() + " left from chat.");
+                        break;
                     case NOTES:
-                        System.out.println("Notes");
-                        sendMessage((String)messageFromClient.contents());
+                        String text = (String) messageFromClient.contents();
+                        sendMessage("#" + nodeInfo.getName() + ": " + text);
                         break;
                 }
                 // System.out.print(messageFromClient);
@@ -65,18 +76,6 @@ public class Server extends Thread{
                 System.err.println("Error reading character from client");
                 return;
             }
-
-            // try {
-            //     toClient.writeByte('a');
-            // } catch (IOException e) {
-            //     System.err.println("Error writing character to client");
-            //     return;            
-            // }
-            
-            // if (charFromClient == 'q') {
-            //     System.out.println("\nBailing out!");
-            //     keepGoing = false;
-            // }
         }
 
         try {

@@ -2,8 +2,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import java.util.List;
-import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -12,7 +12,7 @@ public class ServerThread{
 
     private static ServerSocket serverSocket;
     private static int port;
-    public static List<NodeInfo> nodeList = new ArrayList<NodeInfo>();
+    public static HashMap<NodeInfo, Socket> nodeList = new HashMap<NodeInfo, Socket>();
     Socket clientSocket = null;
 
     public ServerThread(int port) {
@@ -24,13 +24,12 @@ public class ServerThread{
             System.err.println("Error starting server on port " + port);
             System.exit(1);
         }
-
         ServerThread.port = port;
     }
 
     public void runServerLoop() throws IOException {
         while (true) {
-            System.out.println("Waiting for connections on port #" + port);
+            // System.out.println("Waiting for connections on port #" + port);
 
             clientSocket = serverSocket.accept();
             new Thread(new Server(clientSocket)).start();
