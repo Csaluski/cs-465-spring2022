@@ -6,6 +6,7 @@ import java.net.Socket;
 
 public class Server extends Thread{
     Socket clientSocket = null;
+    String clientName = null;
 
     public Server(Socket clientSocket) {
         this.clientSocket = clientSocket;
@@ -46,10 +47,11 @@ public class Server extends Thread{
         while (keepGoing) {
             try {
                 messageFromClient = (Message) fromClient.readObject();
+                NodeInfo nodeInfo = null;
                 switch(messageFromClient.type()) {
                     case SHOTDOWN:
-                        NodeInfo nodeInfo = (NodeInfo) messageFromClient.contents();
-                        System.out.println(nodeInfo.getName() + " SHOTDOWN");
+                        nodeInfo = (NodeInfo) messageFromClient.contents();
+                        System.out.println(clientName + " SHOTDOWN");
                         keepGoing = false;
                         break;
                     case SHOTDOWN_ALL:
@@ -57,18 +59,19 @@ public class Server extends Thread{
                         sendMessage("SHOTDOWN_ALL");
                         break;
                     case JOIN:
-                        NodeInfo nodeInfo = (NodeInfo) messageFromClient.contents();
+                        nodeInfo = (NodeInfo) messageFromClient.contents();
+                        clientName = nodeInfo.getName();
                         ServerThread.nodeList.put(nodeInfo, clientSocket);
-                        sendMessage(nodeInfo.getName() + " joined chat.");
+                        sendMessage(clientName + " joined chat.");
                         break;
                     case LEAVE:
-                        NodeInfo nodeInfo = (NodeInfo) messageFromClient.contents();
+                        nodeInfo = (NodeInfo) messageFromClient.contents();
                         ServerThread.nodeList.remove(nodeInfo);
-                        sendMessage(nodeInfo.getName() + " left from chat.");
+                        sendMessage(clientName + " left from chat.");
                         break;
                     case NOTES:
                         String text = (String) messageFromClient.contents();
-                        sendMessage("#" + nodeInfo.getName() + ": " + text);
+                        sendMessage("#" + clientName + ": " + text);
                         break;
                 }
                 // System.out.print(messageFromClient);

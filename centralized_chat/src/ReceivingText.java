@@ -1,4 +1,4 @@
-import java.io.ObjectInputStream;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 
 import java.io.IOException;
@@ -12,28 +12,36 @@ public class ReceivingText extends Thread{
     }
 
     public void run() {
-        ObjectInputStream fromClient = null;
-        DataOutputStream toClient = null;
-
+        DataInputStream fromClient = null;
         String text = null;
 
         // first get the streams
         try {
-            fromClient = new ObjectInputStream(serverSocket.getInputStream());
+            fromClient = new DataInputStream(serverSocket.getInputStream());
         } catch (IOException e) {
             System.err.println("Error opening network streams");
+            System.out.println(e);
             return;
         }
 
         // now talk to the client
         while (!serverSocket.isClosed()) {
+            System.out.println("waiting text");
             try {
                 text = fromClient.readLine();
-                System.out.print(text);
+                System.out.println(text);
             } catch (Exception e) {
                 System.err.println("Error reading character from client");
                 return;
             }
         }
+        try{
+            fromClient.close();
+        } catch (Exception e) {
+            System.err.println("Error reading character from client");
+            return;
+        }
+    
+        System.out.println("Thread closed");
     }
 }
