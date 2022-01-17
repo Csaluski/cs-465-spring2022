@@ -96,7 +96,7 @@ public class Client {
 
     public static void main(String[] args) {
         String name = "Anonymous";
-        if(args[0] != null) {
+        if(args.length != 0) {
             name = args[0];
         }
         try {
