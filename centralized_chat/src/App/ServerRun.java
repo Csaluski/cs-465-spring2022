@@ -1,43 +1,51 @@
+package App;
+
+import Records.NodeInfo;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import java.util.Map;
 import java.util.HashMap;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class ServerThread{
+public class ServerRun {
 
     private static ServerSocket serverSocket;
     private static int port;
-    public static HashMap<NodeInfo, Socket> nodeList = new HashMap<NodeInfo, Socket>();
+    public static HashMap<NodeInfo, Socket> nodeList = new HashMap<NodeInfo, Socket>(); //used only in Server
     Socket clientSocket = null;
 
-    public ServerThread(int port) {
+    // Constructor for ServerRuns, sets up socket and port.
+    public ServerRun(int port) {
         try {
-            ServerThread.port = port;
-            ServerThread.serverSocket = new ServerSocket(port);
+            ServerRun.port = port;
+            ServerRun.serverSocket = new ServerSocket(port);
         } catch (IOException ex) {
-            Logger.getLogger(ServerThread.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ServerRun.class.getName()).log(Level.SEVERE, null, ex);
             System.err.println("Error starting server on port " + port);
             System.exit(1);
         }
-        ServerThread.port = port;
+        ServerRun.port = port;
     }
 
+    // Main server loop. Accepts a client socket and starts a Server thread for it.
     public void runServerLoop() throws IOException {
         while (true) {
             // System.out.println("Waiting for connections on port #" + port);
-
             clientSocket = serverSocket.accept();
             new Thread(new Server(clientSocket)).start();
         }
     }
 
+    // Starts the server and runs the server loop.
     public static void main(String args[]) throws Exception {
-        ServerThread ServerThread = new ServerThread(23657);
-        ServerThread.runServerLoop();
+        ServerRun serverThread = new ServerRun(23657);
+        serverThread.runServerLoop();
     }
 }
+
+//TODO ROSZE double check everything is commented properly
+
