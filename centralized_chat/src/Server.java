@@ -1,95 +1,73 @@
-import java.io.ObjectInputStream;
-import java.io.DataOutputStream;
-
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.net.Socket;
 
-public class Server extends Thread{
+import java.util.Map;
+import java.util.HashMap;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import utils.PropertyHandler;
+import java.util.Properties;
+
+public class Server{
+
+    private static ServerSocket serverSocket;
+    private static int port = 0;
+    public static HashMap<NodeInfo, Socket> nodeList = new HashMap<NodeInfo, Socket>();
     Socket clientSocket = null;
-    String clientName = null;
 
-    public Server(Socket clientSocket) {
-        this.clientSocket = clientSocket;
-    }
-
-    private void sendMessage(String message) {
-        System.out.println(message);
-        for (NodeInfo key : ServerThread.nodeList.keySet()) {
-            try {
-                Socket socket = ServerThread.nodeList.get(key); 
-                DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-                out.writeUTF(message);
-            } catch(IOException e) {
-                System.out.println("Could not send message");
-                System.out.println(e);
-            }
-        }
-    }
-
-    public void run() {
+    /**
+     * Constructor
+     * 
+     * @param propertiesFile String of a file on relative path containing properties
+     */
+    public Server(String propertiesFile) {
+        Properties properties = null;
         
-        ObjectInputStream fromClient = null;
-        DataOutputStream toClient = null;
-
-        Message messageFromClient = null;
-        boolean keepGoing = true;
-
-        // first get the streams
+        // open properties
         try {
-            fromClient = new ObjectInputStream(clientSocket.getInputStream());
-            toClient = new DataOutputStream(clientSocket.getOutputStream());
-        } catch (IOException e) {
-            System.err.println("Error opening network streams (Server)");
-            return;
+            properties = new PropertyHandler(propertiesFile);
         }
+        catch (IOException ex)
+        {
+            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, "Cannot open properties file", ex);
+            System.exit(1);
+        } 
 
-        // now talk to the client
-        while (keepGoing) {
-            try {
-                messageFromClient = (Message) fromClient.readObject();
-                NodeInfo nodeInfo = null;
-                switch(messageFromClient.type()) {
-                    case SHOTDOWN:
-                        nodeInfo = (NodeInfo) messageFromClient.contents();
-                        System.out.println(clientName + " SHOTDOWN");
-                        keepGoing = false;
-                        break;
-                    case SHOTDOWN_ALL:
-                        keepGoing = false;
-                        sendMessage("SHOTDOWN_ALL");
-                        break;
-                    case JOIN:
-                        nodeInfo = (NodeInfo) messageFromClient.contents();
-                        clientName = nodeInfo.getName();
-                        ServerThread.nodeList.put(nodeInfo, clientSocket);
-                        sendMessage(clientName + " joined chat.");
-                        break;
-                    case LEAVE:
-                        nodeInfo = (NodeInfo) messageFromClient.contents();
-                        ServerThread.nodeList.remove(nodeInfo);
-                        sendMessage(clientName + " left from chat.");
-                        break;
-                    case NOTES:
-                        String text = (String) messageFromClient.contents();
-                        sendMessage("#" + clientName + ": " + text);
-                        break;
-                }
-                // System.out.print(messageFromClient);
-            } catch (Exception e) {
-                System.err.println("Error reading character from client");
-                return;
-            }
-        }
-
+        // get server port number
         try {
-            clientSocket.close();
-        } catch (IOException e) {
-            System.err.println("Error closing socket to client");
+            port = Integer.parseInt(properties.getProperty("SERVER_PORT"));
+        }
+        catch (NumberFormatException ex)
+        {
+            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, "Cannot read server port", ex);
+            System.exit(1);
         }
 
+        // create server socket
+        try {
+            Server.serverSocket = new ServerSocket(port);
+        } catch (IOException ex) {
+            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+            System.err.println("Error starting server on port " + port);
+            System.exit(1);
+        }
+        Server.port = port;
     }
 
-    // public static void main(String[] args) {
+    public void runServerLoop() throws IOException {
+        while (true) {
+            // System.out.println("Waiting for connections on port #" + port);
 
-    // }
+            clientSocket = serverSocket.accept();
+            new Thread(new ServerThread(clientSocket)).start();
+        }
+    }
+
+    public static void main(String args[]) throws Exception {
+        Server Server = new Server("src/config/Server.properties");
+        Server.runServerLoop();
+    }
 }

@@ -1,43 +1,91 @@
+import java.io.ObjectInputStream;
+import java.io.DataOutputStream;
+
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.net.Socket;
 
-import java.util.Map;
-import java.util.HashMap;
-
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-public class ServerThread{
-
-    private static ServerSocket serverSocket;
-    private static int port;
-    public static HashMap<NodeInfo, Socket> nodeList = new HashMap<NodeInfo, Socket>();
+public class ServerThread extends Thread{
     Socket clientSocket = null;
+    String clientName = null;
 
-    public ServerThread(int port) {
+    public ServerThread(Socket clientSocket) {
+        this.clientSocket = clientSocket;
+    }
+
+    private void sendMessage(String message) {
+        System.out.println(message);
+        for (NodeInfo key : Server.nodeList.keySet()) {
+            try {
+                Socket socket = Server.nodeList.get(key); 
+                DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+                out.writeUTF(message);
+            } catch(IOException e) {
+                System.out.println("Could not send message");
+                System.out.println(e);
+            }
+        }
+    }
+
+    public void run() {
+        
+        ObjectInputStream fromClient = null;
+        DataOutputStream toClient = null;
+
+        Message messageFromClient = null;
+        boolean keepGoing = true;
+
+        // first get the streams
         try {
-            ServerThread.port = port;
-            ServerThread.serverSocket = new ServerSocket(port);
-        } catch (IOException ex) {
-            Logger.getLogger(ServerThread.class.getName()).log(Level.SEVERE, null, ex);
-            System.err.println("Error starting server on port " + port);
-            System.exit(1);
+            fromClient = new ObjectInputStream(clientSocket.getInputStream());
+            toClient = new DataOutputStream(clientSocket.getOutputStream());
+        } catch (IOException e) {
+            System.err.println("Error opening network streams");
+            return;
         }
-        ServerThread.port = port;
-    }
 
-    public void runServerLoop() throws IOException {
-        while (true) {
-            // System.out.println("Waiting for connections on port #" + port);
-
-            clientSocket = serverSocket.accept();
-            new Thread(new Server(clientSocket)).start();
+        // now talk to the client
+        while (keepGoing) {
+            try {
+                messageFromClient = (Message) fromClient.readObject();
+                NodeInfo nodeInfo = null;
+                switch(messageFromClient.type()) {
+                    case SHOTDOWN:
+                        nodeInfo = (NodeInfo) messageFromClient.contents();
+                        System.out.println(clientName + " SHOTDOWN");
+                        keepGoing = false;
+                        break;
+                    case SHOTDOWN_ALL:
+                        keepGoing = false;
+                        sendMessage("SHOTDOWN_ALL");
+                        break;
+                    case JOIN:
+                        nodeInfo = (NodeInfo) messageFromClient.contents();
+                        clientName = nodeInfo.getName();
+                        Server.nodeList.put(nodeInfo, clientSocket);
+                        sendMessage(clientName + " joined chat.");
+                        break;
+                    case LEAVE:
+                        nodeInfo = (NodeInfo) messageFromClient.contents();
+                        Server.nodeList.remove(nodeInfo);
+                        sendMessage(clientName + " left from chat.");
+                        break;
+                    case NOTES:
+                        String text = (String) messageFromClient.contents();
+                        sendMessage("#" + clientName + ": " + text);
+                        break;
+                }
+                // System.out.print(messageFromClient);
+            } catch (Exception e) {
+                System.err.println("Error reading character from client");
+                return;
+            }
         }
-    }
 
-    public static void main(String args[]) throws Exception {
-        ServerThread ServerThread = new ServerThread(23657);
-        ServerThread.runServerLoop();
+        try {
+            clientSocket.close();
+        } catch (IOException e) {
+            System.err.println("Error closing socket to client");
+        }
+
     }
 }
