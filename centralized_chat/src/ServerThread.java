@@ -54,10 +54,6 @@ public class ServerThread extends Thread{
                         System.out.println(clientName + " SHOTDOWN");
                         keepGoing = false;
                         break;
-                    case SHOTDOWN_ALL:
-                        keepGoing = false;
-                        sendMessage("SHOTDOWN_ALL");
-                        break;
                     case JOIN:
                         nodeInfo = (NodeInfo) messageFromClient.contents();
                         clientName = nodeInfo.getName();
