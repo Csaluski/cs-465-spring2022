@@ -78,7 +78,6 @@ public class Server extends Thread{
                         nodeInfo = (NodeInfo) messageFromClient.contents();
                         clientName = nodeInfo.name();
                         ServerRun.nodeList.put(nodeInfo, clientSocket);
-
                         // Craft join message.
                         propText = clientName + " joined chat.";
                         propMessage = new Message(MessageType.NOTES, propText);  //NOTES type because textual content.
@@ -106,7 +105,7 @@ public class Server extends Thread{
                         break;
                     case NOTES: // Formats and propagates text from client messages.
                         String text = (String) messageFromClient.contents();
-                        // Craft join message.
+                        // Craft message.
                         propText = "#" + clientName + ": " + text;
                         propMessage = new Message(MessageType.NOTES, propText);  //NOTES type because textual content.
                         // Propagate message.
