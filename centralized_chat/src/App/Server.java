@@ -5,18 +5,18 @@ import Records.MessageType;
 import Records.NodeInfo;
 
 import java.io.ObjectInputStream;
-import java.io.DataOutputStream;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
 import java.net.Socket;
 
 public class Server extends Thread{
-    Socket clientSocket = null;
+    ServerSocket listenSocket = null;
     String clientName = null;
 
-    public Server(Socket clientSocket) {
-        this.clientSocket = clientSocket;
+    public Server(ServerSocket listenSocket) {
+        this.listenSocket = listenSocket;
     }
 
     // TODO change to ephemeral sockets and data streams
@@ -37,6 +37,31 @@ public class Server extends Thread{
         }
     }
 
+    private Thread listenThread() {
+        // from socket should listen waiting for connection, then on accept open object stream, then read message
+        // close object stream, and create thread to do sending to peers and opens socket again.
+        // create and open socket
+
+        // run thread that does socket loop
+
+        // socket loop
+        // hold listen socket open
+        // accept and open object stream
+        // read Message object
+        Message clientMessage;
+        // close stream
+        // create sendThread with message and run
+        Thread sendThread = sendThread(clientMessage);
+        sendThread.run();
+        // reopen listen socket
+
+    }
+
+    private Thread sendThread(Message message) {
+
+    }
+
+    // sets up listen thread, then listen thread spawns send thread when it has message to send
     public void run() {
         ObjectInputStream fromClient = null;
         ObjectOutputStream toClient = null;
@@ -48,10 +73,14 @@ public class Server extends Thread{
         String propText;
         Message propMessage;
 
+        Thread listenThread;
         // First set up the streams.
         try {
-            fromClient = new ObjectInputStream(clientSocket.getInputStream());
-            toClient = new ObjectOutputStream(clientSocket.getOutputStream());
+            listenThread = listenThread();
+            listenThread.run();
+
+            fromClient = new ObjectInputStream(listenSocket.getInputStream());
+            toClient = new ObjectOutputStream(listenSocket.getOutputStream());
         } catch (IOException e) {
             System.err.println("Error opening network streams (Server).");
             return;
@@ -63,6 +92,7 @@ public class Server extends Thread{
                 messageFromClient = (Message) fromClient.readObject();
                 NodeInfo nodeInfo = null;
 
+                // TODO break this out into a function
                 // Message handler.
                 switch(messageFromClient.type()) {
                     case SHUTDOWN: // Prints out on the server when a client shuts down for readability, kills thread.
@@ -77,7 +107,7 @@ public class Server extends Thread{
                     case JOIN: // Puts client info into hashtable and starts a server thread for that client.
                         nodeInfo = (NodeInfo) messageFromClient.contents();
                         clientName = nodeInfo.name();
-                        ServerRun.nodeList.put(nodeInfo, clientSocket);
+                        ServerRun.nodeList.put(nodeInfo, listenSocket);
                         // Craft join message.
                         propText = clientName + " joined chat.";
                         propMessage = new Message(MessageType.NOTES, propText);  //NOTES type because textual content.
@@ -126,7 +156,7 @@ public class Server extends Thread{
 
         // Close up shop when everything is done.
         try {
-            clientSocket.close();
+            listenSocket.close();
         } catch (IOException e) {
             System.err.println("Error closing socket to client");
         }

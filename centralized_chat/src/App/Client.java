@@ -61,9 +61,9 @@ public class Client {
         };
     }
 
-    private void run() {
-        // Thread that reads inputs, creates, and sends messages to server
-        Thread sendMessage = new Thread(() -> {
+    // Thread that reads inputs, creates, and sends messages to server
+    private Thread sendThread() {
+        Thread thread = new Thread(() -> {
             while (true) {
                 // read the message to deliver.
                 String msg = input.nextLine();
@@ -87,9 +87,12 @@ public class Client {
             }
         });
 
-        // readMessage thread
-        // Thread that receives messages from server and displays output to user
-        Thread readMessage = new Thread(() -> {
+        return thread;
+    }
+
+    // Thread that receives messages from server and displays output to user
+    private Thread readThread() {
+        Thread thread = new Thread(() -> {
             while (true) {
                 try {
                     ServerSocket listenSocket = new ServerSocket(nodeInfo.port());
@@ -107,8 +110,15 @@ public class Client {
                 }
             }
         });
-        sendMessage.start();
-        readMessage.start();
+
+        return thread;
+    }
+
+    private void run() {
+        Thread sendThread = sendThread();
+        Thread readThread = readThread();
+        sendThread.start();
+        readThread.start();
     }
 
     // client will only ever receive NOTES type messages from server,
@@ -125,8 +135,8 @@ public class Client {
         try {
             Client client = new Client(name);
             client.run();
-        } catch (IOException i) {
-            System.out.println(i);
+        } catch (IOException e) {
+            System.out.println(e);
         }
     }
 }

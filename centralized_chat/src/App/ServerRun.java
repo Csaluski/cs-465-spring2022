@@ -16,7 +16,7 @@ public class ServerRun {
     private static ServerSocket serverSocket;
     private static int port;
     public static HashMap<NodeInfo, Socket> nodeList = new HashMap<NodeInfo, Socket>(); //used only in Server
-    Socket clientSocket = null;
+    Socket listenSocket = null;
 
     // Constructor for ServerRuns, sets up socket and port.
     public ServerRun(int port) {
@@ -35,8 +35,7 @@ public class ServerRun {
     public void runServerLoop() throws IOException {
         while (true) {
             // System.out.println("Waiting for connections on port #" + port);
-            clientSocket = serverSocket.accept();
-            new Thread(new Server(clientSocket)).start();
+            new Thread(new Server(serverSocket)).start();
         }
     }
 
