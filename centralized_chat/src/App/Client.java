@@ -32,13 +32,6 @@ public class Client {
         } catch (IOException e) {
             System.out.println(e);
         }
-//        try {
-//            socket = new Socket(address, port);
-//            fromServer = new DataInputStream(socket.getInputStream());
-//            out = new ObjectOutputStream(socket.getOutputStream());
-//        } catch (IOException e) {
-//            System.out.println(e);
-//        }
 
         this.nodeInfo = new NodeInfo(address, listenPort, name);
 
@@ -61,6 +54,19 @@ public class Client {
         };
     }
 
+    private void sendMessage(Message message) {
+        // try to connect to server from stored info, if it fails, it fails
+        try {
+            Socket socket = new Socket(serverInfo.address(), serverInfo.port());
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+            out.writeObject(message);
+            out.close();
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     // Thread that reads inputs, creates, and sends messages to server
     private Thread sendThread() {
         Thread thread = new Thread(() -> {
@@ -69,21 +75,37 @@ public class Client {
                 String msg = input.nextLine();
                 Message newMessage = createMessage(msg);
 
-                // TODO implement join/leave/shutdown logic, ie no double joining/sending messages when left, etc
-                // TODO this should be implemented in server logic, but here we trust the client
-
-                // try to connect to server from stored info, if it fails, it fails
-                if (newMessage != null) {
-                    try {
-                        Socket socket = new Socket(serverInfo.address(), serverInfo.port());
-                        ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-                        out.writeObject(newMessage);
-                        out.close();
-                        socket.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                // Special case logic
+                // Manage connection flag
+                if (!connected && newMessage.type() == MessageType.JOIN) {
+                    connected = true;
+                } else if (connected && newMessage.type() == MessageType.LEAVE) {
+                    connected = false;
                 }
+                // Don't allow double joining a server
+                else if (connected && newMessage.type() == MessageType.JOIN) {
+                    System.out.println("You are already joined!");
+                    continue;
+                }
+                // Don't allow disconnecting from an already disconnected server
+                else if (!connected && newMessage.type() == MessageType.LEAVE) {
+                    System.out.println("You are not connected, cannot leave.");
+                    continue;
+                }
+                // If already disconnected, simply kill client
+                else if (!connected && newMessage.type() == MessageType.SHUTDOWN) {
+                    System.out.println("Shutting down");
+                    break;
+                }
+                // If connected and shutting down, create leave message and then kill client
+                else if (connected && newMessage.type() == MessageType.SHUTDOWN) {
+                    System.out.println("Disconnecting and shutting down");
+                    newMessage = new Message(MessageType.LEAVE, nodeInfo);
+                    sendMessage(newMessage);
+                    break;
+                }
+                // Otherwise, message is good to send.
+                sendMessage(newMessage);
             }
         });
 
@@ -123,6 +145,7 @@ public class Client {
 
     // client will only ever receive NOTES type messages from server,
     // other messages are sent with info for the sake of the server
+    // This method will be updated considerably in the future P2P implementation of the client.
     void showMessage(Message message) {
         System.out.println(message.contents());
     }
