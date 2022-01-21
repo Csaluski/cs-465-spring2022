@@ -36,6 +36,60 @@ public class Server extends Thread{
             }
         }
     }
+    
+    private Message createMessage() {
+        Message propMessage = null;
+        NodeInfo nodeInfo = null;
+        switch(messageFromClient.type()) {
+            case SHUTDOWN: // Prints out on the server when a client shuts down for readability, kills thread.
+                nodeInfo = (NodeInfo) messageFromClient.contents();
+                System.out.println(clientName + " SHUTDOWN");
+                break;
+            case JOIN: // Puts client info into hashtable and starts a server thread for that client.
+                nodeInfo = (NodeInfo) messageFromClient.contents();
+                clientName = nodeInfo.name();
+                ServerRun.nodeList.put(nodeInfo, listenSocket);
+                // Craft join message.
+                propText = clientName + " joined chat.";
+                propMessage = new Message(MessageType.NOTES, propText);  //NOTES type because textual content.
+                // Propagate join message.
+                for(Socket propSocket : ServerRun.nodeList.values()) {
+                    // Propagation stream opens and closes each time since you can't change sockets.
+                    ObjectOutputStream propStream = new ObjectOutputStream(propSocket.getOutputStream());
+                    propStream.writeObject(propMessage);
+                    propStream.close();
+                }
+                break;
+            case LEAVE: // Removes client from hashtable.
+                nodeInfo = (NodeInfo) messageFromClient.contents();
+                ServerRun.nodeList.remove(nodeInfo);
+                // Craft leave message.
+                propText = clientName + " left chat.";
+                propMessage = new Message(MessageType.NOTES, propText); //NOTES type because textual content.
+                // Propagate leave message.
+                for(Socket propSocket : ServerRun.nodeList.values()) {
+                    // Propagation stream opens and closes each time since you can't change sockets.
+                    ObjectOutputStream propStream = new ObjectOutputStream(propSocket.getOutputStream());
+                    propStream.writeObject(propMessage);
+                    propStream.close();
+                }
+                break;
+            case NOTES: // Formats and propagates text from client messages.
+                String text = (String) messageFromClient.contents();
+                // Craft message.
+                propText = "#" + clientName + ": " + text;
+                propMessage = new Message(MessageType.NOTES, propText);  //NOTES type because textual content.
+                // Propagate message.
+                for(Socket propSocket : ServerRun.nodeList.values()) {
+                    // Propagation stream opens and closes each time since you can't change sockets.
+                    ObjectOutputStream propStream = new ObjectOutputStream(propSocket.getOutputStream());
+                    propStream.writeObject(propMessage);
+                    propStream.close();
+                }
+                break;
+        }
+        return propMessage;
+    }
 
     private Thread listenThread() {
         // from socket should listen waiting for connection, then on accept open object stream, then read message
@@ -90,63 +144,11 @@ public class Server extends Thread{
         while (keepGoing) {
             try {
                 messageFromClient = (Message) fromClient.readObject();
-                NodeInfo nodeInfo = null;
+                
 
                 // TODO break this out into a function
                 // Message handler.
-                switch(messageFromClient.type()) {
-                    case SHUTDOWN: // Prints out on the server when a client shuts down for readability, kills thread.
-                        nodeInfo = (NodeInfo) messageFromClient.contents();
-                        System.out.println(clientName + " SHUTDOWN");
-                        keepGoing = false;
-                        break;
-//                    case SHUTDOWN_ALL:
-//                        keepGoing = false;
-//                        sendMessage("SHUTDOWN_ALL");
-//                        break;
-                    case JOIN: // Puts client info into hashtable and starts a server thread for that client.
-                        nodeInfo = (NodeInfo) messageFromClient.contents();
-                        clientName = nodeInfo.name();
-                        ServerRun.nodeList.put(nodeInfo, listenSocket);
-                        // Craft join message.
-                        propText = clientName + " joined chat.";
-                        propMessage = new Message(MessageType.NOTES, propText);  //NOTES type because textual content.
-                        // Propagate join message.
-                        for(Socket propSocket : ServerRun.nodeList.values()) {
-                            // Propagation stream opens and closes each time since you can't change sockets.
-                            ObjectOutputStream propStream = new ObjectOutputStream(propSocket.getOutputStream());
-                            propStream.writeObject(propMessage);
-                            propStream.close();
-                        }
-                        break;
-                    case LEAVE: // Removes client from hashtable.
-                        nodeInfo = (NodeInfo) messageFromClient.contents();
-                        ServerRun.nodeList.remove(nodeInfo);
-                        // Craft leave message.
-                        propText = clientName + " left chat.";
-                        propMessage = new Message(MessageType.NOTES, propText); //NOTES type because textual content.
-                        // Propagate leave message.
-                        for(Socket propSocket : ServerRun.nodeList.values()) {
-                            // Propagation stream opens and closes each time since you can't change sockets.
-                            ObjectOutputStream propStream = new ObjectOutputStream(propSocket.getOutputStream());
-                            propStream.writeObject(propMessage);
-                            propStream.close();
-                        }
-                        break;
-                    case NOTES: // Formats and propagates text from client messages.
-                        String text = (String) messageFromClient.contents();
-                        // Craft message.
-                        propText = "#" + clientName + ": " + text;
-                        propMessage = new Message(MessageType.NOTES, propText);  //NOTES type because textual content.
-                        // Propagate message.
-                        for(Socket propSocket : ServerRun.nodeList.values()) {
-                            // Propagation stream opens and closes each time since you can't change sockets.
-                            ObjectOutputStream propStream = new ObjectOutputStream(propSocket.getOutputStream());
-                            propStream.writeObject(propMessage);
-                            propStream.close();
-                        }
-                        break;
-                }
+                
                 System.out.print(messageFromClient);
             } catch (Exception e) {
                 System.err.println("Error reading character from client");
