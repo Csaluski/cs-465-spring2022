@@ -34,11 +34,8 @@ public class Server extends Thread{
     private Message createMessage() {
         Message propMessage = null;
         NodeInfo nodeInfo = null;
+        String propText;
         switch(messageFromClient.type()) {
-            case SHUTDOWN: // Prints out on the server when a client shuts down for readability, kills thread.
-                nodeInfo = (NodeInfo) messageFromClient.contents();
-                System.out.println(clientName + " SHUTDOWN");
-                break;
             case JOIN: // Puts client info into hashtable and starts a server thread for that client.
                 nodeInfo = (NodeInfo) messageFromClient.contents();
                 clientName = nodeInfo.name();
@@ -64,28 +61,31 @@ public class Server extends Thread{
         return propMessage;
     }
 
-    private Thread listenThread() {
-        // from socket should listen waiting for connection, then on accept open object stream, then read message
-        // close object stream, and create thread to do sending to peers and opens socket again.
-        // create and open socket
+    // private Thread listenThread() {
+    //     // from socket should listen waiting for connection, then on accept open object stream, then read message
+    //     // close object stream, and create thread to do sending to peers and opens socket again.
+    //     // create and open socket
 
-        // run thread that does socket loop
+    //     // run thread that does socket loop
 
-        // socket loop
-        // hold listen socket open
-        // accept and open object stream
-        // read Message object
-        Message clientMessage;
-        // close stream
-        // create sendThread with message and run
-        Thread sendThread = sendThread(clientMessage);
-        sendThread.run();
-        // reopen listen socket
+    //     // socket loop
+    //     // hold listen socket open
+    //     // accept and open object stream
+    //     // read Message object
+    //     Message clientMessage;
+    //     // close stream
+    //     // create sendThread with message and run
+    //     Thread sendThread = sendThread(clientMessage);
+    //     sendThread.run();
+    //     // reopen listen socket
 
-    }
+    // }
 
     private Thread sendThread(Message message) {
-
+        Message propMessage = createMessage(message);
+        if(propMessage != null) {
+            sendMessage(propMessage);
+        }
     }
 
     // sets up listen thread, then listen thread spawns send thread when it has message to send
@@ -97,15 +97,13 @@ public class Server extends Thread{
         boolean keepGoing = true;
 
         // Variables for message propagation.
-        String propText;
-        Message propMessage;
+        // Message propMessage;
 
-        Thread listenThread;
+        // Thread listenThread;
         // First set up the streams.
         try {
-            listenThread = listenThread();
-            listenThread.run();
-
+            // listenThread = listenThread();
+            // listenThread.run();
             fromClient = new ObjectInputStream(listenSocket.getInputStream());
             toClient = new ObjectOutputStream(listenSocket.getOutputStream());
         } catch (IOException e) {
@@ -117,12 +115,14 @@ public class Server extends Thread{
         while (keepGoing) {
             try {
                 messageFromClient = (Message) fromClient.readObject();
-                
-
+                if(messageFromClient.type() == SHUTDOWN){ // Prints out on the server when a client shuts down for readability, kills thread.
+                    System.out.println(clientName + " SHUTDOWN");
+                    keepGoing = false;
+                }else{
+                    sendThread(messageFromClient);
+                }
                 // TODO break this out into a function
                 // Message handler.
-                
-                System.out.print(messageFromClient);
             } catch (Exception e) {
                 System.err.println("Error reading character from client");
                 return;
