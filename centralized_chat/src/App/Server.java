@@ -12,10 +12,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 public class Server extends Thread{
-    ServerSocket listenSocket = null;
+    Socket listenSocket = null;
     String clientName = null;
 
-    public Server(ServerSocket listenSocket) {
+    public Server(Socket listenSocket) {
         this.listenSocket = listenSocket;
     }
 
@@ -31,7 +31,7 @@ public class Server extends Thread{
         }
     }
     
-    private Message createMessage() {
+    private Message createMessage(Message messageFromClient) {
         Message propMessage = null;
         NodeInfo nodeInfo = null;
         String propText;

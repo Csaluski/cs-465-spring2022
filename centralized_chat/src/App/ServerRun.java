@@ -13,7 +13,7 @@ import java.util.logging.Logger;
 
 public class ServerRun {
 
-    private static ServerSocket serverSocket;
+    private static Socket serverSocket;
     private static int port;
     public static HashMap<NodeInfo, Socket> nodeList = new HashMap<NodeInfo, Socket>(); //used only in Server
     Socket listenSocket = null;
@@ -22,7 +22,7 @@ public class ServerRun {
     public ServerRun(int port) {
         try {
             ServerRun.port = port;
-            ServerRun.serverSocket = new ServerSocket(port);
+            ServerRun.serverSocket = new Socket(port);
         } catch (IOException ex) {
             Logger.getLogger(ServerRun.class.getName()).log(Level.SEVERE, null, ex);
             System.err.println("Error starting server on port " + port);
