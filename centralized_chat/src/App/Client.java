@@ -36,8 +36,8 @@ public class Client {
 
         PropertyHandler propReader = new PropertyHandler("server.properties");
 
-        Inet4Address serverAddr = (Inet4Address) Inet4Address.getByName(propReader.getProperty("serverAddr"));
-        int serverPort = Integer.parseInt(propReader.getProperty("serverPort"));
+        Inet4Address serverAddr = (Inet4Address) Inet4Address.getByName(propReader.getProperty("SERVER_ADDR"));
+        int serverPort = Integer.parseInt(propReader.getProperty("SERVER_PORT"));
 
         this.serverInfo = new NodeInfo(serverAddr, serverPort, "SERVER");
 

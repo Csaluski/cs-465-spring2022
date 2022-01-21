@@ -12,20 +12,19 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 public class Server extends Thread{
-    Socket listenSocket = null;
-    String clientName = null;
+    ServerSocket listenSocket = null;
 
-    public Server(Socket listenSocket) {
+    public Server(ServerSocket listenSocket) {
         this.listenSocket = listenSocket;
     }
 
     // TODO change to ephemeral sockets and data streams
     //Sends message via ObjectOutputStream (since we want to send the whole Message object).
     private void sendMessage(Message propMessage) {
-        System.out.println(propMessage);
-        for(Socket propSocket : ServerRun.nodeList.values()) {
+        for(NodeInfo nodeInfo : ServerRun.nodeList) {
             // Propagation stream opens and closes each time since you can't change sockets.
             try {
+                Socket propSocket = new Socket(nodeInfo.address(), nodeInfo.port());
                 ObjectOutputStream propStream = new ObjectOutputStream(propSocket.getOutputStream());
                 propStream.writeObject(propMessage);
                 propStream.close();
@@ -38,12 +37,16 @@ public class Server extends Thread{
     private Message createMessage(Message messageFromClient) {
         Message propMessage = null;
         NodeInfo nodeInfo = null;
-        String propText;
+        String propText = null;
+        String clientName = null;
         switch(messageFromClient.type()) {
+            case SHUTDOWN:
+                propText = clientName + " SHUTDOWN.";
+                break;
             case JOIN: // Puts client info into hashtable and starts a server thread for that client.
                 nodeInfo = (NodeInfo) messageFromClient.contents();
                 clientName = nodeInfo.name();
-                ServerRun.nodeList.put(nodeInfo, listenSocket);
+                ServerRun.nodeList.add(nodeInfo);
                 // Craft join message.
                 propText = clientName + " joined chat.";
                 propMessage = new Message(MessageType.NOTES, propText);  //NOTES type because textual content.
@@ -62,28 +65,11 @@ public class Server extends Thread{
                 propMessage = new Message(MessageType.NOTES, propText);  //NOTES type because textual content.
                 break;
         }
+        // Prints out on the server when a client shuts down for readability
+        System.out.println(propText);
+
         return propMessage;
     }
-
-    // private Thread listenThread() {
-    //     // from socket should listen waiting for connection, then on accept open object stream, then read message
-    //     // close object stream, and create thread to do sending to peers and opens socket again.
-    //     // create and open socket
-
-    //     // run thread that does socket loop
-
-    //     // socket loop
-    //     // hold listen socket open
-    //     // accept and open object stream
-    //     // read Message object
-    //     Message clientMessage;
-    //     // close stream
-    //     // create sendThread with message and run
-    //     Thread sendThread = sendThread(clientMessage);
-    //     sendThread.run();
-    //     // reopen listen socket
-
-    // }
 
     private Thread sendThread(Message message) {
         Thread thread = new Thread(() -> {
@@ -99,35 +85,17 @@ public class Server extends Thread{
     public void run() {
         ObjectInputStream fromClient = null;
         ObjectOutputStream toClient = null;
-
         Message messageFromClient = null;
-        boolean keepGoing = true;
-
-        // Variables for message propagation.
-        // Message propMessage;
-
-        // Thread listenThread;
-        // First set up the streams.
-        try {
-            // listenThread = listenThread();
-            // listenThread.run();
-            fromClient = new ObjectInputStream(listenSocket.getInputStream());
-            toClient = new ObjectOutputStream(listenSocket.getOutputStream());
-        } catch (IOException e) {
-            System.err.println("Error opening network streams (Server).");
-            return;
-        }
 
         // Talk to the client.
-        while (keepGoing) {
+        while (true) {
             try {
+                Socket socket = listenSocket.accept();
+                System.out.println(socket);
+                fromClient = new ObjectInputStream(socket.getInputStream());
+                toClient = new ObjectOutputStream(socket.getOutputStream());
                 messageFromClient = (Message) fromClient.readObject();
-                if(messageFromClient.type() == MessageType.SHUTDOWN){ // Prints out on the server when a client shuts down for readability, kills thread.
-                    System.out.println(clientName + " SHUTDOWN");
-                    keepGoing = false;
-                }else{
-                    sendThread(messageFromClient);
-                }
+                sendThread(messageFromClient).run();
                 // TODO break this out into a function
                 // Message handler.
             } catch (Exception e) {
@@ -137,17 +105,13 @@ public class Server extends Thread{
         }
 
         // Close up shop when everything is done.
-        try {
-            listenSocket.close();
-        } catch (IOException e) {
-            System.err.println("Error closing socket to client");
-        }
+        // try {
+        //     listenSocket.close();
+        // } catch (IOException e) {
+        //     System.err.println("Error closing socket to client");
+        // }
 
     }
-
-    // public static void main(String[] args) {
-
-    // }
 }
 
 //TODO write comments

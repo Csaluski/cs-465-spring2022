@@ -6,20 +6,41 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import PropertyHandler.PropertyHandler;
+import java.util.Properties;
 
 public class ServerRun {
 
     private static ServerSocket serverSocket;
     private static int port;
-    public static HashMap<NodeInfo, Socket> nodeList = new HashMap<NodeInfo, Socket>(); //used only in Server
-    Socket listenSocket = null;
+    public static List<NodeInfo> nodeList = new ArrayList<NodeInfo>(); //used only in Server
 
     // Constructor for ServerRuns, sets up socket and port.
-    public ServerRun(int port) {
+    public ServerRun(String propertiesFile) {
+        Properties properties = null;
+        int port = -1;
+        // open properties
+        try {
+            properties = new PropertyHandler(propertiesFile);
+        } catch (IOException ex) {
+            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, "Cannot open properties file", ex);
+            System.exit(1);
+        } 
+
+        // get server port number
+        try {
+            port = Integer.parseInt(properties.getProperty("SERVER_PORT"));
+        } catch (NumberFormatException ex){
+            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, "Cannot read server port", ex);
+            System.exit(1);
+        }
+
         try {
             ServerRun.port = port;
             ServerRun.serverSocket = new ServerSocket(port);
@@ -28,20 +49,16 @@ public class ServerRun {
             System.err.println("Error starting server on port " + port);
             System.exit(1);
         }
-        ServerRun.port = port;
     }
 
     // Main server loop. Accepts a client socket and starts a Server thread for it.
     public void runServerLoop() throws IOException {
-        while (true) {
-            // System.out.println("Waiting for connections on port #" + port);
-            new Thread(new Server(serverSocket.accept())).start();
-        }
+        new Thread(new Server(serverSocket)).start();
     }
 
     // Starts the server and runs the server loop.
     public static void main(String args[]) throws Exception {
-        ServerRun serverThread = new ServerRun(23657);
+        ServerRun serverThread = new ServerRun("server.properties");
         serverThread.runServerLoop();
     }
 }
