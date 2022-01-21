@@ -25,9 +25,13 @@ public class Server extends Thread{
         System.out.println(propMessage);
         for(Socket propSocket : ServerRun.nodeList.values()) {
             // Propagation stream opens and closes each time since you can't change sockets.
-            ObjectOutputStream propStream = new ObjectOutputStream(propSocket.getOutputStream());
-            propStream.writeObject(propMessage);
-            propStream.close();
+            try {
+                ObjectOutputStream propStream = new ObjectOutputStream(propSocket.getOutputStream());
+                propStream.writeObject(propMessage);
+                propStream.close();
+            } catch (IOException e) {
+                System.out.println(e);
+            }
         }
     }
     
@@ -82,10 +86,13 @@ public class Server extends Thread{
     // }
 
     private Thread sendThread(Message message) {
-        Message propMessage = createMessage(message);
-        if(propMessage != null) {
-            sendMessage(propMessage);
-        }
+        Thread thread = new Thread(() -> {
+            Message propMessage = createMessage(message);
+            if(propMessage != null) {
+                sendMessage(propMessage);
+            }
+        });
+        return thread;
     }
 
     // sets up listen thread, then listen thread spawns send thread when it has message to send
@@ -115,7 +122,7 @@ public class Server extends Thread{
         while (keepGoing) {
             try {
                 messageFromClient = (Message) fromClient.readObject();
-                if(messageFromClient.type() == SHUTDOWN){ // Prints out on the server when a client shuts down for readability, kills thread.
+                if(messageFromClient.type() == MessageType.SHUTDOWN){ // Prints out on the server when a client shuts down for readability, kills thread.
                     System.out.println(clientName + " SHUTDOWN");
                     keepGoing = false;
                 }else{
