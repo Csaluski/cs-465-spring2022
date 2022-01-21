@@ -21,19 +21,13 @@ public class Server extends Thread{
 
     // TODO change to ephemeral sockets and data streams
     //Sends message via ObjectOutputStream (since we want to send the whole Message object).
-    private void sendMessage(Message message) {
-        System.out.println(message);
-        for (NodeInfo key : ServerRun.nodeList.keySet()) {
-            try {
-                Socket socket = ServerRun.nodeList.get(key);
-                //New output stream when a message needs to be sent.
-                ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-                //Send the message.
-                out.writeObject(message);
-            } catch(IOException e) {
-                System.out.println("Could not send message.");
-                System.out.println(e);
-            }
+    private void sendMessage(Message propMessage) {
+        System.out.println(propMessage);
+        for(Socket propSocket : ServerRun.nodeList.values()) {
+            // Propagation stream opens and closes each time since you can't change sockets.
+            ObjectOutputStream propStream = new ObjectOutputStream(propSocket.getOutputStream());
+            propStream.writeObject(propMessage);
+            propStream.close();
         }
     }
     
@@ -52,13 +46,6 @@ public class Server extends Thread{
                 // Craft join message.
                 propText = clientName + " joined chat.";
                 propMessage = new Message(MessageType.NOTES, propText);  //NOTES type because textual content.
-                // Propagate join message.
-                for(Socket propSocket : ServerRun.nodeList.values()) {
-                    // Propagation stream opens and closes each time since you can't change sockets.
-                    ObjectOutputStream propStream = new ObjectOutputStream(propSocket.getOutputStream());
-                    propStream.writeObject(propMessage);
-                    propStream.close();
-                }
                 break;
             case LEAVE: // Removes client from hashtable.
                 nodeInfo = (NodeInfo) messageFromClient.contents();
@@ -66,26 +53,12 @@ public class Server extends Thread{
                 // Craft leave message.
                 propText = clientName + " left chat.";
                 propMessage = new Message(MessageType.NOTES, propText); //NOTES type because textual content.
-                // Propagate leave message.
-                for(Socket propSocket : ServerRun.nodeList.values()) {
-                    // Propagation stream opens and closes each time since you can't change sockets.
-                    ObjectOutputStream propStream = new ObjectOutputStream(propSocket.getOutputStream());
-                    propStream.writeObject(propMessage);
-                    propStream.close();
-                }
                 break;
             case NOTES: // Formats and propagates text from client messages.
                 String text = (String) messageFromClient.contents();
                 // Craft message.
                 propText = "#" + clientName + ": " + text;
                 propMessage = new Message(MessageType.NOTES, propText);  //NOTES type because textual content.
-                // Propagate message.
-                for(Socket propSocket : ServerRun.nodeList.values()) {
-                    // Propagation stream opens and closes each time since you can't change sockets.
-                    ObjectOutputStream propStream = new ObjectOutputStream(propSocket.getOutputStream());
-                    propStream.writeObject(propMessage);
-                    propStream.close();
-                }
                 break;
         }
         return propMessage;
