@@ -91,7 +91,6 @@ public class Server extends Thread{
         while (true) {
             try {
                 Socket socket = listenSocket.accept();
-                System.out.println(socket);
                 fromClient = new ObjectInputStream(socket.getInputStream());
                 toClient = new ObjectOutputStream(socket.getOutputStream());
                 messageFromClient = (Message) fromClient.readObject();
