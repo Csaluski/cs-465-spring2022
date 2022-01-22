@@ -41,27 +41,28 @@ public class Server extends Thread{
         String clientName = null;
         switch(messageFromClient.type()) {
             case SHUTDOWN:
-                propText = clientName + " SHUTDOWN.";
+                propText = "'" + clientName + "' SHUTDOWN.";
                 break;
             case JOIN: // Puts client info into hashtable and starts a server thread for that client.
                 nodeInfo = (NodeInfo) messageFromClient.contents();
                 clientName = nodeInfo.name();
                 ServerRun.nodeList.add(nodeInfo);
                 // Craft join message.
-                propText = clientName + " joined chat.";
+                propText = "'" + clientName + "' joined chat.";
                 propMessage = new Message(MessageType.NOTES, propText);  //NOTES type because textual content.
                 break;
             case LEAVE: // Removes client from hashtable.
                 nodeInfo = (NodeInfo) messageFromClient.contents();
+                clientName = nodeInfo.name();
                 ServerRun.nodeList.remove(nodeInfo);
                 // Craft leave message.
-                propText = clientName + " left chat.";
+                propText = "'" + clientName + "' left chat.";
                 propMessage = new Message(MessageType.NOTES, propText); //NOTES type because textual content.
                 break;
             case NOTES: // Formats and propagates text from client messages.
                 String text = (String) messageFromClient.contents();
                 // Craft message.
-                propText = "#" + clientName + ": " + text;
+                propText = text;
                 propMessage = new Message(MessageType.NOTES, propText);  //NOTES type because textual content.
                 break;
         }
