@@ -1,31 +1,27 @@
 package App;
 
 import Records.NodeInfo;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-
 import java.util.List;
 import java.util.ArrayList;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import PropertyHandler.PropertyHandler;
 import java.util.Properties;
 
 public class ServerRun {
-
     private static ServerSocket serverSocket;
     private static int port;
-    public static List<NodeInfo> nodeList = new ArrayList<NodeInfo>(); //used only in Server
+    public static List<NodeInfo> nodeList = new ArrayList<NodeInfo>(); // Used only in Server.
 
     // Constructor for ServerRuns, sets up socket and port.
     public ServerRun(String propertiesFile) {
         Properties properties = null;
         int port = -1;
-        // open properties
+
+        // Open properties.
         try {
             properties = new PropertyHandler(propertiesFile);
         } catch (IOException ex) {
@@ -33,7 +29,7 @@ public class ServerRun {
             System.exit(1);
         } 
 
-        // get server port number
+        // Get server port number.
         try {
             port = Integer.parseInt(properties.getProperty("SERVER_PORT"));
         } catch (NumberFormatException ex){
@@ -41,6 +37,7 @@ public class ServerRun {
             System.exit(1);
         }
 
+        // Try initializing server.
         try {
             ServerRun.port = port;
             ServerRun.serverSocket = new ServerSocket(port);
@@ -62,6 +59,4 @@ public class ServerRun {
         serverThread.runServerLoop();
     }
 }
-
-//TODO ROSZE double check everything is commented properly
 

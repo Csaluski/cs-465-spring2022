@@ -1,21 +1,16 @@
 package App;
 
 import java.io.*;
-
-
 import PropertyHandler.PropertyHandler;
 import Records.Message;
 import Records.MessageType;
 import Records.NodeInfo;
-
 import java.net.Inet4Address;
 import java.net.ServerSocket;
 import java.net.Socket;
-
 import java.util.Scanner;
 
 public class Client {
-
     private final NodeInfo nodeInfo;
     private final NodeInfo serverInfo;
     private Scanner input = null;
@@ -44,6 +39,7 @@ public class Client {
         input = new Scanner(System.in);
     }
 
+    // Message creation using Message and MessageType.
     private Message createMessage(String rawMessage) {
         return switch (rawMessage) {
             case "JOIN" -> new Message(MessageType.JOIN, nodeInfo);
@@ -53,8 +49,9 @@ public class Client {
         };
     }
 
+    // Message sending through ObjectOutputStream.
     private void sendMessage(Message message) {
-        // try to connect to server from stored info, if it fails, it fails
+        // Try to connect to server from stored info, if it fails, it fails.
         try {
             Socket socket = new Socket(serverInfo.address(), serverInfo.port());
             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
@@ -66,39 +63,39 @@ public class Client {
         }
     }
 
-    // Thread that reads inputs, creates, and sends messages to server
+    // Thread that reads inputs, creates, and sends messages to server.
     private Thread sendThread() {
         Thread thread = new Thread(() -> {
             while (true) {
-                // read the message to deliver.
+                // Read the message to deliver.
                 String msg = input.nextLine();
                 Message newMessage = createMessage(msg);
 
-                // Special case logic
-                // Manage connection flag
+                // Special case logic.
+                // Manage connection flag.
                 if (!connected && newMessage.type() == MessageType.JOIN) {
                     connected = true;
                 } else if (connected && newMessage.type() == MessageType.LEAVE) {
                     connected = false;
                 }
-                // Don't allow double joining a server
+                // Don't allow double joining a server.
                 else if (connected && newMessage.type() == MessageType.JOIN) {
                     System.out.println("You are already joined!");
                     continue;
                 }
-                // Don't allow disconnecting from an already disconnected server
+                // Don't allow disconnecting from an already disconnected server.
                 else if (!connected && newMessage.type() == MessageType.LEAVE) {
                     System.out.println("You are not connected, cannot leave.");
                     continue;
                 }
-                // If already disconnected, simply kill client
+                // If already disconnected, simply kill client.
                 else if (!connected && newMessage.type() == MessageType.SHUTDOWN) {
                     System.out.println("Shutting down");
                     break;
                 }
-                // If connected and shutting down, create leave message and then kill client
+                // If connected and shutting down, create leave message and then kill client.
                 else if (connected && newMessage.type() == MessageType.SHUTDOWN) {
-                    System.out.println("Disconnecting and shutting down");
+                    System.out.println("Disconnecting and shutting down.");
                     newMessage = new Message(MessageType.LEAVE, nodeInfo);
                     sendMessage(newMessage);
                     break;
@@ -111,7 +108,7 @@ public class Client {
         return thread;
     }
 
-    // Thread that receives messages from server and displays output to user
+    // Thread that receives messages from server and displays output to user.
     private Thread readThread() {
         Thread thread = new Thread(() -> {
             while (true) {
@@ -135,6 +132,7 @@ public class Client {
         return thread;
     }
 
+    // Start sending and reading threads for the client.
     private void run() {
         Thread sendThread = sendThread();
         Thread readThread = readThread();
@@ -142,13 +140,13 @@ public class Client {
         readThread.start();
     }
 
-    // client will only ever receive NOTES type messages from server,
-    // other messages are sent with info for the sake of the server
+    // Client will only ever receive NOTES type messages from server, other messages are sent with info for the sake of the server.
     // This method will be updated considerably in the future P2P implementation of the client.
     void showMessage(Message message) {
         System.out.println(message.contents());
     }
 
+    // Tracks the client name and initializes the client on start.
     public static void main(String[] args) {
         String name = "Anonymous";
         if (args.length > 1) {
@@ -162,5 +160,3 @@ public class Client {
         }
     }
 }
-
-//TODO write comments

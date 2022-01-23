@@ -18,8 +18,7 @@ public class Server extends Thread{
         this.listenSocket = listenSocket;
     }
 
-    // TODO change to ephemeral sockets and data streams
-    //Sends message via ObjectOutputStream (since we want to send the whole Message object).
+    // Sends message via ObjectOutputStream (since we want to send the whole Message object).
     private void sendMessage(Message propMessage) {
         for(NodeInfo nodeInfo : ServerRun.nodeList) {
             // Propagation stream opens and closes each time since you can't change sockets.
@@ -72,6 +71,7 @@ public class Server extends Thread{
         return propMessage;
     }
 
+    // Passes prepared messages along for propagation.
     private Thread sendThread(Message message) {
         Thread thread = new Thread(() -> {
             Message propMessage = createMessage(message);
@@ -82,7 +82,7 @@ public class Server extends Thread{
         return thread;
     }
 
-    // sets up listen thread, then listen thread spawns send thread when it has message to send
+    // Sets up listen thread, then listen thread spawns send thread when it has message to send.
     public void run() {
         ObjectInputStream fromClient = null;
         ObjectOutputStream toClient = null;
@@ -99,7 +99,7 @@ public class Server extends Thread{
                 // TODO break this out into a function
                 // Message handler.
             } catch (Exception e) {
-                System.err.println("Error reading character from client");
+                System.err.println("Error reading character from client.");
                 return;
             }
         }
@@ -110,8 +110,5 @@ public class Server extends Thread{
         // } catch (IOException e) {
         //     System.err.println("Error closing socket to client");
         // }
-
     }
 }
-
-//TODO write comments
