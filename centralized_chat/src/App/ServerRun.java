@@ -27,12 +27,12 @@ public class ServerRun {
         } catch (IOException ex) {
             Logger.getLogger(Server.class.getName()).log(Level.SEVERE, "Cannot open properties file", ex);
             System.exit(1);
-        } 
+        }
 
         // Get server port number.
         try {
             port = Integer.parseInt(properties.getProperty("SERVER_PORT"));
-        } catch (NumberFormatException ex){
+        } catch (NumberFormatException ex) {
             Logger.getLogger(Server.class.getName()).log(Level.SEVERE, "Cannot read server port", ex);
             System.exit(1);
         }
@@ -41,6 +41,8 @@ public class ServerRun {
         try {
             ServerRun.port = port;
             ServerRun.serverSocket = new ServerSocket(port);
+            System.out.println("Server initialized correctly! Running on port " + port
+                    + " and IP is " + IPUtils.getMyIP());
         } catch (IOException ex) {
             Logger.getLogger(ServerRun.class.getName()).log(Level.SEVERE, null, ex);
             System.err.println("Error starting server on port " + port);

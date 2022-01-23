@@ -16,5 +16,8 @@ public class Main {
         else if (args[0].equals("client")) {
             Client.main(args);
         }
+        else {
+            System.out.println("Unrecognized command, please run with arguments of either 'server' or 'client nickname'.");
+        }
     }
 }

@@ -15,18 +15,25 @@ public class Client {
     private final NodeInfo serverInfo;
     private Scanner input = null;
     private boolean connected;
+    private final ServerSocket listenSocket;
 
+    // Client constructor and initialization.
     private Client(String name) throws IOException {
-        Inet4Address address = (Inet4Address) Inet4Address.getByName("localhost");
+        ServerSocket listenSocketTemp;
+        Inet4Address address = (Inet4Address) Inet4Address.getByName(IPUtils.getMyIP());
         int listenPort = -1;
-        // Opens a listening port on an unused port, then takes the port number to use later in the socket loop
+        listenSocketTemp = null;
+        // Opens a listening port on an unused port, then takes the port number to use later in the socket loop.
         try (ServerSocket socket = new ServerSocket(0)) {
             listenPort = socket.getLocalPort();
             socket.close();
+            listenSocketTemp = new ServerSocket(listenPort);
         } catch (IOException e) {
             System.out.println(e);
         }
 
+        // From here onward is the initialization process.
+        listenSocket = listenSocketTemp;
         this.nodeInfo = new NodeInfo(address, listenPort, name);
 
         PropertyHandler propReader = new PropertyHandler("server.properties");
@@ -35,6 +42,7 @@ public class Client {
         int serverPort = Integer.parseInt(propReader.getProperty("SERVER_PORT"));
 
         this.serverInfo = new NodeInfo(serverAddr, serverPort, "SERVER");
+        System.out.println("Client ready to go, connecting to " + serverInfo);
 
         input = new Scanner(System.in);
     }
@@ -45,7 +53,7 @@ public class Client {
             case "JOIN" -> new Message(MessageType.JOIN, nodeInfo);
             case "LEAVE" -> new Message(MessageType.LEAVE, nodeInfo);
             case "SHUTDOWN" -> new Message(MessageType.SHUTDOWN, nodeInfo);
-            default -> new Message(MessageType.NOTES, rawMessage);
+            default -> new Message(MessageType.NOTES,  nodeInfo.name()+ ": " + rawMessage); // Formats with client nickname.
         };
     }
 
@@ -90,14 +98,15 @@ public class Client {
                 }
                 // If already disconnected, simply kill client.
                 else if (!connected && newMessage.type() == MessageType.SHUTDOWN) {
-                    System.out.println("Shutting down");
-                    break;
+                    System.out.println("Shutting down.");
+                    System.exit(0);
                 }
                 // If connected and shutting down, create leave message and then kill client.
                 else if (connected && newMessage.type() == MessageType.SHUTDOWN) {
                     System.out.println("Disconnecting and shutting down.");
                     newMessage = new Message(MessageType.LEAVE, nodeInfo);
                     sendMessage(newMessage);
+                    System.exit(0);
                     break;
                 }
                 // Otherwise, message is good to send.
@@ -113,16 +122,17 @@ public class Client {
         Thread thread = new Thread(() -> {
             while (true) {
                 try {
-                    ServerSocket listenSocket = new ServerSocket(nodeInfo.port());
+                    // Wait for server to initialize connection using callback information provided in nodeInfo.
                     Socket listen = listenSocket.accept();
-                    ObjectInputStream in = new ObjectInputStream(listen.getInputStream());
 
+                    // Create object in stream from socket and read message object from server.
+                    ObjectInputStream in = new ObjectInputStream(listen.getInputStream());
                     Message message = (Message) in.readObject();
                     showMessage(message);
 
+                    // Clean up socket and stream after read completes.
                     in.close();
                     listen.close();
-                    listenSocket.close();
                 } catch (IOException | ClassNotFoundException e) {
                     e.printStackTrace();
                 }
