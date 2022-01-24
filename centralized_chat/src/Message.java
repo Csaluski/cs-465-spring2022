@@ -10,4 +10,11 @@ public class Message implements Serializable {
         this.contents = contents;
     }
 
+    public MessageType type() {
+        return type;
+    }
+
+    public Object contents() {
+        return contents;
+    }
 }
