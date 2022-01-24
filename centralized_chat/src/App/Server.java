@@ -21,7 +21,7 @@ public class Server extends Thread {
         for (NodeInfo nodeInfo : ServerRun.nodeList) {
             // Propagation stream opens and closes each time since you can't change sockets.
             try {
-                System.out.println(nodeInfo.toString());
+                System.out.println("DEBUG: Sending message " + propMessage + " to client " + nodeInfo);
                 Socket propSocket = new Socket(nodeInfo.address(), nodeInfo.port());
                 ObjectOutputStream propStream = new ObjectOutputStream(propSocket.getOutputStream());
                 propStream.writeObject(propMessage);
@@ -97,6 +97,7 @@ public class Server extends Thread {
                 Socket socket = listenSocket.accept();
                 fromClient = new ObjectInputStream(socket.getInputStream());
                 messageFromClient = (Message) fromClient.readObject();
+                System.out.println("DEBUG: Received message " + messageFromClient);
                 // Run thread that does socket loop.
                 sendThread(messageFromClient).start();
                 fromClient.close();
@@ -107,11 +108,5 @@ public class Server extends Thread {
             }
         }
 
-        // Close up shop when everything is done.
-        // try {
-        //     listenSocket.close();
-        // } catch (IOException e) {
-        //     System.err.println("Error closing socket to client");
-        // }
     }
 }

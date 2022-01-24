@@ -1,10 +1,12 @@
 package App;
 
 import java.io.*;
+
 import PropertyHandler.PropertyHandler;
 import Records.Message;
 import Records.MessageType;
 import Records.NodeInfo;
+
 import java.net.Inet4Address;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -53,7 +55,7 @@ public class Client {
             case "JOIN" -> new Message(MessageType.JOIN, nodeInfo);
             case "LEAVE" -> new Message(MessageType.LEAVE, nodeInfo);
             case "SHUTDOWN" -> new Message(MessageType.SHUTDOWN, nodeInfo);
-            default -> new Message(MessageType.NOTES,  nodeInfo.name()+ ": " + rawMessage); // Formats with client nickname.
+            default -> new Message(MessageType.NOTES, nodeInfo.name() + ": " + rawMessage); // Formats with client nickname.
         };
     }
 
@@ -64,6 +66,7 @@ public class Client {
             Socket socket = new Socket(serverInfo.address(), serverInfo.port());
             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
             out.writeObject(message);
+            System.out.println("DEBUG: " + message.toString());
             out.close();
             socket.close();
         } catch (IOException e) {
@@ -81,9 +84,12 @@ public class Client {
 
                 // Special case logic.
                 // Manage connection flag.
+                // assume sending join message will succeed
                 if (!connected && newMessage.type() == MessageType.JOIN) {
                     connected = true;
-                } else if (connected && newMessage.type() == MessageType.LEAVE) {
+                }
+                // assume sending leave message will succeed
+                else if (connected && newMessage.type() == MessageType.LEAVE) {
                     connected = false;
                 }
                 // Don't allow double joining a server.
@@ -94,6 +100,11 @@ public class Client {
                 // Don't allow disconnecting from an already disconnected server.
                 else if (!connected && newMessage.type() == MessageType.LEAVE) {
                     System.out.println("You are not connected, cannot leave.");
+                    continue;
+                }
+                else if (!connected && newMessage.type() == MessageType.NOTES)
+                {
+                    System.out.println("You are not connected, cannot send message.");
                     continue;
                 }
                 // If already disconnected, simply kill client.
@@ -107,7 +118,6 @@ public class Client {
                     newMessage = new Message(MessageType.LEAVE, nodeInfo);
                     sendMessage(newMessage);
                     System.exit(0);
-                    break;
                 }
                 // Otherwise, message is good to send.
                 sendMessage(newMessage);
