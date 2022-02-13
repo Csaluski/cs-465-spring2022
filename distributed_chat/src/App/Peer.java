@@ -38,11 +38,11 @@ public class Peer {
         // int serverPort = Integer.parseInt(propReader.getProperty("SERVER_PORT"));
 
         // this.serverInfo = new NodeInfo(serverAddr, serverPort, "SERVER");
-        // System.out.println("Client ready to go, connecting to " + serverInfo);
+        System.out.println(nodeInfo);
     }
 
     private void run() {
-        new Thread(new SendThread(this.nodeInfo)).start();
+        new Thread(new ClientThread(this.nodeInfo, listenSocket)).start();
     }
 
     public static void main(String[] args) {
