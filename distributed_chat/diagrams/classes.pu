@@ -1,0 +1,41 @@
+@startuml
+Class Peer {
+    static List<Peer> peers
+    void sendJoinRequest()
+    void createSendThread()
+    void createListenThread()
+}
+
+Class SendThread {
+    void run()
+    void sendMessage()
+    Message createMessage()
+}
+
+Class ListenThread {
+    void run()
+    void sendPeerList()
+    void addPeer()
+    void removePeer()
+    void showMessage()
+}
+
+Class Message {
+    MessageType type
+    Object contents
+}
+
+Class NodeInfo {
+   
+}
+
+Enum MessageType
+
+Peer "many" -- Peer 
+SendThread "1" -- Peer
+ListenThread "1" -- Peer
+Message "1" -- Peer
+MessageType "1" -- Message
+NodeInfo "0..1" -- Message
+
+@enduml
