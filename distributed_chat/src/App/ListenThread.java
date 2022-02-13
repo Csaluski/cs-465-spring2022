@@ -20,7 +20,7 @@ public class ListenThread extends Thread {
         this.listenSocket = listenSocket;
     }
 
-    private void handleMessage(Message messageFromClient){
+    private void handleMessage(Message messageFromClient, ObjectOutputStream out){
         Message propMessage = null;
         NodeInfo nodeInfo = null;
         String propText = null;
@@ -28,13 +28,11 @@ public class ListenThread extends Thread {
 
         switch (messageFromClient.type()) {
             case JOIN -> {
+                System.out.println("receive JOIN");
                 nodeInfo = (NodeInfo) messageFromClient.contents();
                 try {
-                    Socket socket = new Socket(nodeInfo.address(), nodeInfo.port());
-                    ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
                     out.writeObject((ArrayList<NodeInfo>)Peer.nodeList);
                     out.close();
-                    socket.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -72,7 +70,9 @@ public class ListenThread extends Thread {
 
     public void run(){
         ObjectInputStream fromPeer = null;
+        ObjectOutputStream toPeer = null;
         Message messageFromPeer = null;
+
         // Talk to the client.
         // Socket loop.
         while (true) {
@@ -81,14 +81,16 @@ public class ListenThread extends Thread {
                 // Close object stream, and create thread to do sending to peers and opens socket again.
                 // Create and open socket.
                 Socket socket = listenSocket.accept();
+                toPeer = new ObjectOutputStream(socket.getOutputStream());
                 fromPeer = new ObjectInputStream(socket.getInputStream());
                 messageFromPeer = (Message) fromPeer.readObject();
-                handleMessage(messageFromPeer);
+                handleMessage(messageFromPeer, toPeer);
                 // System.out.println("DEBUG: Received message " + messageFromClient);
                 fromPeer.close();
                 socket.close();
             } catch (Exception e) {
                 System.err.println("Error reading character from client.");
+                e.printStackTrace();
                 return;
             }
         }

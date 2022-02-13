@@ -16,46 +16,40 @@ import java.util.Scanner;
 import java.util.ArrayList;
 
 public class ClientThread extends Thread {
-    private boolean connected;
-    private final NodeInfo nodeInfo;
+    private boolean connected = false;
+    private final NodeInfo myNodeInfo;
     private final ServerSocket listenSocket;
 
     ClientThread(NodeInfo nodeInfo, ServerSocket listenSocket) {
-        this.nodeInfo = nodeInfo;
+        this.myNodeInfo = nodeInfo;
         this.listenSocket = listenSocket;
     }
 
     private Message createMessage(String[] rawMessage) {
         return switch (rawMessage[0]) {
-            case "JOIN" -> new Message(MessageType.JOIN, nodeInfo);
-            case "LEAVE" -> new Message(MessageType.LEAVE, nodeInfo);
-            case "SHUTDOWN" -> new Message(MessageType.SHUTDOWN, nodeInfo);
-            default -> new Message(MessageType.NOTES, nodeInfo.name() + ": " + rawMessage[0]); // Formats with client nickname.
+            case "JOIN" -> new Message(MessageType.JOIN, myNodeInfo);
+            case "LEAVE" -> new Message(MessageType.LEAVE, myNodeInfo);
+            case "SHUTDOWN" -> new Message(MessageType.SHUTDOWN, myNodeInfo);
+            default -> new Message(MessageType.NOTES, myNodeInfo.name() + ": " + rawMessage[0]); // Formats with client nickname.
         };
     }
 
+    @SuppressWarnings("unchecked")
     private void joinChat(Message newMessage, String[] messages) {
         try {
             int port = Integer.parseInt(messages[1]);
             Inet4Address address = (Inet4Address) Inet4Address.getByName(messages[2]);
             Socket socket = new Socket(address, port);
             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-            out.writeObject(newMessage);
-            receiveNodeList(socket);
-            out.close();
-            socket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private void receiveNodeList(Socket socket){
-        try {
             ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+
+            out.writeObject(newMessage);
             Peer.nodeList = (ArrayList<NodeInfo>) in.readObject();
-            connected = true;
+            sendJoinInfo();
+            Peer.nodeList.add(new NodeInfo(address, port, "?"));
+
             in.close();
+            out.close();
             socket.close();
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
@@ -67,7 +61,7 @@ public class ClientThread extends Thread {
             for(NodeInfo nodeInfo : Peer.nodeList) {
                 Socket socket = new Socket(nodeInfo.address(), nodeInfo.port());
                 ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-                Message joinInfo = new Message(MessageType.JOIN_INFO, nodeInfo);
+                Message joinInfo = new Message(MessageType.JOIN_INFO, this.myNodeInfo);
                 out.writeObject(joinInfo);
                 out.close();
                 socket.close();
@@ -134,7 +128,7 @@ public class ClientThread extends Thread {
             // If connected and shutting down, create leave message and then kill client.
             else if (connected && newMessage.type() == MessageType.SHUTDOWN) {
                 System.out.println("Disconnecting and shutting down.");
-                newMessage = new Message(MessageType.LEAVE, nodeInfo);
+                newMessage = new Message(MessageType.LEAVE, myNodeInfo);
                 sendMessage(newMessage);
                 System.exit(0);
             }

@@ -26,5 +26,4 @@ hs_err_pid*
 out/
 
 *sh/
-
 *.DS_Store
