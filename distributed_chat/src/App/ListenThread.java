@@ -30,8 +30,9 @@ public class ListenThread extends Thread {
             case JOIN -> {
                 System.out.println("receive JOIN");
                 nodeInfo = (NodeInfo) messageFromClient.contents();
+                ClientThread.connected = true;
                 try {
-                    out.writeObject((ArrayList<NodeInfo>)Peer.nodeList);
+                    out.writeObject(Peer.nodeList);
                     out.close();
                 } catch (IOException e) {
                     e.printStackTrace();

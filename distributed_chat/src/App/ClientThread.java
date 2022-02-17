@@ -8,21 +8,21 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.IOException;
 
-import java.net.Inet4Address;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 
 import java.util.Scanner;
 import java.util.ArrayList;
 
 public class ClientThread extends Thread {
-    private boolean connected = false;
+    public static boolean connected = false;
     private final NodeInfo myNodeInfo;
     private final ServerSocket listenSocket;
 
     ClientThread(NodeInfo nodeInfo, ServerSocket listenSocket) {
         this.myNodeInfo = nodeInfo;
         this.listenSocket = listenSocket;
+        new Thread(new ListenThread(listenSocket)).start();
+
     }
 
     private Message createMessage(String[] rawMessage) {
@@ -34,11 +34,22 @@ public class ClientThread extends Thread {
         };
     }
 
-    @SuppressWarnings("unchecked")
-    private void joinChat(Message newMessage, String[] messages) {
+    private InetSocketAddress createDestination(String[] dest) {
+        InetSocketAddress destAddr = null;
         try {
-            int port = Integer.parseInt(messages[1]);
-            Inet4Address address = (Inet4Address) Inet4Address.getByName(messages[2]);
+            destAddr = new InetSocketAddress(InetAddress.getByName(dest[1]), Integer.parseInt(dest[2]));
+        } catch (Exception e) {
+            System.out.println(e);
+            destAddr = new InetSocketAddress("localhost", 0);
+        }
+        return destAddr;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void joinChat(Message newMessage, String[] messageWords) {
+        try {
+            int port = Integer.parseInt(messageWords[2]);
+            Inet4Address address = (Inet4Address) Inet4Address.getByName(messageWords[1]);
             Socket socket = new Socket(address, port);
             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
             ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
@@ -46,7 +57,8 @@ public class ClientThread extends Thread {
             out.writeObject(newMessage);
             Peer.nodeList = (ArrayList<NodeInfo>) in.readObject();
             sendJoinInfo();
-            Peer.nodeList.add(new NodeInfo(address, port, "?"));
+            // add self to the peer nodelist
+            Peer.nodeList.add(new NodeInfo(address, port, myNodeInfo.name()));
 
             in.close();
             out.close();
@@ -58,7 +70,7 @@ public class ClientThread extends Thread {
 
     private void sendJoinInfo() {
         try {
-            for(NodeInfo nodeInfo : Peer.nodeList) {
+            for (NodeInfo nodeInfo : Peer.nodeList) {
                 Socket socket = new Socket(nodeInfo.address(), nodeInfo.port());
                 ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
                 Message joinInfo = new Message(MessageType.JOIN_INFO, this.myNodeInfo);
@@ -77,27 +89,22 @@ public class ClientThread extends Thread {
         new Thread(new SendThread(newMessage)).start();
     }
 
-    public void run(){
+    public void run() {
         Scanner input = new Scanner(System.in);
         while (true) {
             // Read the message to deliver.
             String message = input.nextLine();
-            String[] messages = message.split(" ");
-            Message newMessage = null;
-            if(messages[0].equals("LISTEN")) {
-                new Thread(new ListenThread(listenSocket)).start();
-                connected = true;
-                continue;
-            } else {
-                newMessage = createMessage(messages);
-            }
+            String[] messageWords = message.split(" ");
+            Message newMessage = createMessage(messageWords);
             // Special case logic.
             // Manage connection flag.
             // assume sending join message will succeed
             if (!connected && newMessage.type() == MessageType.JOIN) {
-                joinChat(newMessage, messages);
-                if(connected){
-                    new Thread(new ListenThread(listenSocket)).start();
+                if (messageWords.length != 3) {
+                    System.out.println("Must also specify peer IP and port");
+                }
+                else {
+                    joinChat(newMessage, messageWords);
                 }
                 continue;
             }
@@ -114,9 +121,7 @@ public class ClientThread extends Thread {
             else if (!connected && newMessage.type() == MessageType.LEAVE) {
                 System.out.println("You are not connected, cannot leave.");
                 continue;
-            }
-            else if (!connected && newMessage.type() == MessageType.NOTES)
-            {
+            } else if (!connected && newMessage.type() == MessageType.NOTES) {
                 System.out.println("You are not connected, cannot send message.");
                 continue;
             }
@@ -136,5 +141,5 @@ public class ClientThread extends Thread {
             sendMessage(newMessage);
         }
     }
-    
+
 }
