@@ -2,19 +2,20 @@ package App;
 
 import Records.Message;
 import Records.NodeInfo;
-
 import java.io.ObjectOutputStream;
 import java.io.IOException;
-
 import java.net.Socket;
 
+// Handles connection part of sending messages.
 public class SendThread extends Thread {
     private Message message;
 
+    // Constructor.
     SendThread(Message message) {
         this.message = message;
     }
 
+    // Connects and writes message.
     private void sendMessage() {
         for (NodeInfo nodeInfo : Peer.nodeList) {
             // Propagation stream opens and closes each time since you can't change sockets.
@@ -31,6 +32,7 @@ public class SendThread extends Thread {
         }
     }
 
+    // Running sends a message in this case.
     public void run(){
         sendMessage();
     }
