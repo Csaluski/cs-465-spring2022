@@ -24,12 +24,13 @@ public class ClientThread extends Thread {
     }
 
     // Creation of message objects via a switch.
-    private Message createMessage(String[] rawMessage) {
-        return switch (rawMessage[0]) {
+    private Message createMessage(String rawMessage) {
+        String[] messageWords = rawMessage.split(" ");
+        return switch (messageWords[0]) {
             case "JOIN" -> new Message(MessageType.JOIN, myNodeInfo);
             case "LEAVE" -> new Message(MessageType.LEAVE, myNodeInfo);
             case "SHUTDOWN" -> new Message(MessageType.SHUTDOWN, myNodeInfo);
-            default -> new Message(MessageType.NOTES, myNodeInfo.name() + ": " + rawMessage[0]); // Formats with client nickname.
+            default -> new Message(MessageType.NOTES, myNodeInfo.name() + ": " + rawMessage); // Formats with client nickname.
         };
     }
 
@@ -107,7 +108,7 @@ public class ClientThread extends Thread {
             // Read the message to deliver.
             String message = input.nextLine();
             String[] messageWords = message.split(" ");
-            Message newMessage = createMessage(messageWords);
+            Message newMessage = createMessage(message);
 
             // Special case logic.
             // Manage connection flag.
