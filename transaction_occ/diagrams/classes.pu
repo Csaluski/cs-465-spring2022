@@ -1,0 +1,36 @@
+@startuml
+Class Client {
+}
+
+Class Proxy {
+}
+
+Class TransactionWorker {
+}
+
+Class TransactionMenager {
+}
+
+Class Server {
+
+}
+
+Class AccountManager {
+
+}
+
+Class Account {
+    
+}
+
+
+
+
+Proxy "1" -- Client
+Proxy "1" -- "1" TransactionWorker
+TransactionMenager "1" -- "many" TransactionWorker
+Server "1" -- "1" TransactionMenager
+AccountManager "1" -- "many" Account
+AccountManager "1" -- "many" TransactionWorker
+
+@enduml
