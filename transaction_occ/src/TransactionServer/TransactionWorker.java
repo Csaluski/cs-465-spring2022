@@ -20,7 +20,8 @@ public class TransactionWorker extends Thread {
     }
     
     // Receive and process messages from client
-    run(){
+    @Override
+    void run(){
 
     }
 }

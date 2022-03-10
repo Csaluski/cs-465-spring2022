@@ -2,6 +2,7 @@ package Account;
 
 public class Account {
     private int balance;
+    private int id;
 
     public Account(int balance) {
         this.balance = balance;
