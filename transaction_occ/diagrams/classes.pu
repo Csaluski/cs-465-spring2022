@@ -8,7 +8,7 @@ Class Proxy {
 Class TransactionWorker {
 }
 
-Class TransactionMenager {
+Class TransactionManager {
 }
 
 Class Server {
@@ -25,12 +25,12 @@ Class Account {
 
 
 
+Server "1" -- "1" TransactionManager
+Server "1" -- "1" AccountManager
 
 Proxy "1" -- Client
 Proxy "1" -- "1" TransactionWorker
-TransactionMenager "1" -- "many" TransactionWorker
-Server "1" -- "1" TransactionMenager
+TransactionManager "1" -- "many" TransactionWorker
 AccountManager "1" -- "many" Account
-AccountManager "1" -- "many" TransactionWorker
 
 @enduml

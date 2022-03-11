@@ -1,22 +1,26 @@
-package App;
+package ProxyServer;
+
+import Records.OpMessage;
+
+import java.net.Socket;
 
 public class Proxy {
     // Send messages to transaction server through this socket
-    private final Socket clientSocket;
+    private final Socket clientSocket = null;
 
     Proxy(){
 
     }
 
-    private Message makeMessage(){
-
+    private OpMessage makeMessage(){
+        return null;
     }
 
     // return transaction ID
-    // connect to App.Server by using server port and ip
+    // connect to App.Server.Server by using server port and ip
     // get transaction ID from transaction manager via stream
     private int openTransaction(){
-
+        return 0;
     }
 
     private void closeTransaction(){
@@ -33,7 +37,7 @@ public class Proxy {
 
     }
 
-    private void sendMessage(Message message){
+    private void sendMessage(OpMessage opMessage){
 
     }
 }

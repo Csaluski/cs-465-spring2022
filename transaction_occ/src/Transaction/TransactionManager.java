@@ -1,12 +1,15 @@
-package App;
+package Transaction;
+
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TransactionManager {
-    static List<Integer> readSet = new ArrayList<Integer>();
-    static Map<Integer, Integer> writeSet = new HashMap<Integer, Integer>();
+    static List<Transaction> transactions = new ArrayList<Transaction>();
 
     int transactionID = 0;
 
-    TransactionManager(){
+    public TransactionManager(){
 
     }
 
@@ -14,7 +17,7 @@ public class TransactionManager {
         return transactionID++;
     }
 
-    // Craete a TransactionWorker
+    // Create a TransactionWorker
     // Send transaction ID to proxy via stream
     private void openTransaction(Socket socket){
         
@@ -25,8 +28,8 @@ public class TransactionManager {
     }
 
     // This should not be interfered until commit or abort
-    public void validate(){
-
+    public boolean validate(){
+        return false;
     }
 
 }

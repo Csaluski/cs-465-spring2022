@@ -1,11 +1,13 @@
-package App;
+package Client;
 
 
-public class Client {
-    private final Proxy proxy;
+import ProxyServer.Proxy;
+
+public class ClientThread {
+    private final Proxy proxy = null;
     private int transactionID;
 
-    Client() {
+    ClientThread() {
         
     }
 
