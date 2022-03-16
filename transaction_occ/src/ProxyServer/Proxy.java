@@ -4,6 +4,9 @@ import Records.OpMessage;
 
 import java.net.Socket;
 
+// Creates message of type OPEN_TRANSACTION
+// opens connection to transaction server & sends message
+// (leaves connection open)
 public class Proxy {
     // Send messages to transaction server through this socket
     private final Socket clientSocket = null;
@@ -37,6 +40,7 @@ public class Proxy {
 
     }
 
+    // Handle message sending based on previous code.
     private void sendMessage(OpMessage opMessage){
 
     }
