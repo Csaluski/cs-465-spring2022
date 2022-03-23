@@ -7,7 +7,6 @@ import java.util.List;
 // Spanws off a TransactionWorker thread.
 public class TransactionManager {
     static List<Transaction> transactions = new ArrayList<Transaction>();
-    // List of locks held goes here if we had locking, but we don't.
 
     int transactionID = 0;
     int lastTransactionNumber = 0; // Tracks last assigned TN.
@@ -16,7 +15,7 @@ public class TransactionManager {
 
     }
 
-    private int assignTransactionID() {
+    public int getNewTransactionId() {
         return transactionID++;
     }
 
@@ -35,7 +34,7 @@ public class TransactionManager {
     }
 
     // This should not be interfered until commit or abort
-    public boolean validate() {
+    public boolean validate(Transaction transaction) {
         // Transaction number is assigned in the beginning of this phase.
 
         // Determine via transaction numbers which are overlapping based
@@ -45,10 +44,11 @@ public class TransactionManager {
 
     // Handles synchronization checks.
     // Synchronized so that only one thread can be here at once.
-    synchronized boolean commit(transactions) {
+    synchronized boolean commit(Transaction transaction) {
         // If transaction validated, commit + write data
         //      + tell client transaction is completed
         // If validation fails, abort and tell client
+        return false;
     }
 
 }

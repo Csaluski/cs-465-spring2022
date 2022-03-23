@@ -2,9 +2,13 @@ package Server;
 
 import Account.AccountManager;
 import PropertyHandler.PropertyHandler;
+import Transaction.Transaction;
 import Transaction.TransactionManager;
+import Transaction.TransactionWorker;
 
 import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 
 // Server loop with managers for accounts and transactions.
 // Wakes up from accept returning a socket.
@@ -12,26 +16,37 @@ import java.io.IOException;
 public class Server {
     public static AccountManager accountManager;
     public static TransactionManager transactionManager;
+    private static ServerSocket listenSocket;
 
     public static void main(String[] args) throws IOException {
         // Server setup stuff.
         PropertyHandler propReader = new PropertyHandler("server.properties");
         int numAccounts = Integer.parseInt(propReader.getProperty("accounts"));
         int initBalance = Integer.parseInt(propReader.getProperty("balance"));
+        int listenPort = Integer.parseInt(propReader.getProperty("port"));
         accountManager = new AccountManager(numAccounts, initBalance);
         transactionManager = new TransactionManager();
+        listenSocket = new ServerSocket(listenPort);
 
-        runServer();
+        Server server = new Server();
+        server.run();
     }
 
-    // Accepts new transactions.
-    private Socket accept() {
+    // Accepts new transactions when a proxy connects to the waiting socket,
+    // when the socket is opened it creates a new TransactionWorker
+    // that it passes the socket to
+    // and handles it for the remainder of the session
+    private void run() {
+        while (true) {
+            try {
+                Socket socket = listenSocket.accept();
+                TransactionWorker workerThread = new TransactionWorker(socket, transactionManager);
+                workerThread.start();
+            }
+            catch (Exception e) {
 
-    }
-
-    // Server loop goes here.
-    private void runServer() {
-
+            }
+        }
     }
 }
 

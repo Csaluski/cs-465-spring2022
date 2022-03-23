@@ -9,27 +9,38 @@ import java.util.List;
 public class Transaction{
     int id;
     int number;
-    List<Integer> readSet;
-    HashMap<Integer, Integer> writeSet;
+    // list of the accounts that have been read from
+    List<Integer> readSet = new ArrayList<>();
+    // set mapping account numbers to balances
+    HashMap<Integer, Integer> writeSet = new HashMap<>();
 
+    public Transaction() {
+    }
 
-    public Transaction(int number) {
+    void assignNumber(int number){
         this.number = number;
-        List<Integer> readSet = new ArrayList<>();
-        HashMap<Integer, Integer> writeSet = new HashMap<>();
     }
 
-    void assignId(int id){
-        this.id = id;
-    }
-
-    int readAccount(int accountId)
+    public int readAccount(int accountId)
     {
-        AccountManager.accounts.get(accountId);
-        return 0;
+        Integer balance;
+
+        balance = writeSet.get(accountId);
+
+        if (balance == null)
+        {
+            AccountManager.accounts.get(accountId);
+        }
+
+        if (!readSet.contains(accountId))
+        {
+            readSet.add(accountId);
+        }
+        return balance;
     }
 
-    void writeAccount(int accountId, int amount){
-
+    public int writeAccount(int accountId, int amount){
+        writeSet.put(accountId, amount);
+        return amount;
     }
 }
