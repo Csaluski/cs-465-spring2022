@@ -3,12 +3,16 @@ package ProxyServer;
 import Records.OpMessage;
 import Records.OpMessageType;
 import Records.Account;
-
-import java.net.Socket;
+import Records.ResponseMessage;
 
 import PropertyHandler.PropertyHandler;
+
 import java.net.Inet4Address;
 import java.net.Socket;
+
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.IOException;
 
 // Creates message of type OPEN_TRANSACTION
 // opens connection to transaction server & sends message
@@ -67,25 +71,27 @@ public class Proxy {
 
     // Handle message sending based on previous code.
     private void sendMessage(OpMessage opMessage){
-        // try {
-        //     ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
-        //     out.writeObject(opMessage);
-        //     System.out.println("DEBUG: " + opMessage.toString());
-        //     out.close();
-        // } catch (IOException e) {
-        //     e.printStackTrace();
-        // }
+        try {
+            ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
+            out.writeObject(opMessage);
+            System.out.println("DEBUG: " + opMessage.toString());
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void receiveMessage(){
-        // try {
-        //     ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
-        //     ResponseMessage responseMessage = (ResponseMessage) in.readObject();
-        //     System.out.println("DEBUG: " + responseMessage.toString());
-        //     in.close();
-        //     clientSocket.close();
-        // } catch (IOException e) {
-        //     e.printStackTrace();
-        // }
+        try {
+            ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
+            ResponseMessage responseMessage = (ResponseMessage) in.readObject();
+            System.out.println("DEBUG: " + responseMessage.toString());
+            in.close();
+            clientSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 }
