@@ -13,7 +13,7 @@ public class ClientThread {
 
     // Setup for necessary proxy.
     private void createProxy() {
-        
+        proxy = new Proxy();
     }
 
     private void run() {
@@ -21,5 +21,9 @@ public class ClientThread {
         // send read request to proxy
         // send write request to proxy
         // Have proxy close transaction
+        proxy.openTransaction();
+        proxy.read(1);
+        proxy.write(1);
+        proxy.closeTransaction();
     }
 }
