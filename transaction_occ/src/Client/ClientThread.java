@@ -25,7 +25,6 @@ public class ClientThread extends Thread {
             amount = rand.nextInt(10000) + 1;
         } catch (Exception e) {
             System.out.println(e);
-            return;
         }
     }
 

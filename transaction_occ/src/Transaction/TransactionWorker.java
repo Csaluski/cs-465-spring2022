@@ -1,28 +1,25 @@
 package Transaction;
 
-import Records.Account;
-import Records.OpMessage;
-import Records.ResponseMessage;
-import Records.ResponseMessageType;
+import Records.*;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+// Instances of this class are created when the TransactionManager accepts a new connection from a Proxy,
+// then this class takes the role of handling all communications with the proxy until the client
+// closes the transaction
 public class TransactionWorker extends Thread {
     private final TransactionManager transactionManager;
     private final Transaction transaction;
     private final Socket socket;
-
+    private ObjectInputStream fromClient;
+    private ObjectOutputStream toClient;
     public TransactionWorker(Socket socket, TransactionManager manager) {
         this.socket = socket;
         this.transactionManager = manager;
         this.transaction = new Transaction();
-    }
-
-    private void receiveMessage() {
-
     }
 
     private int readBalance(int accountID) {
@@ -50,11 +47,11 @@ public class TransactionWorker extends Thread {
             }
 
             case OPEN_TRANSACTION -> {
-                this.transaction.assignNumber(transactionManager.getNewTransactionId());
+                transactionManager.openTransaction(transaction);
                 response = new ResponseMessage(ResponseMessageType.OPEN, null);
             }
             case CLOSE_TRANSACTION -> {
-                boolean validated = transactionManager.validate(transaction);
+                boolean validated = transactionManager.closeTransaction(transaction);
                 ResponseMessageType responseMessageType = validated ? ResponseMessageType.SUCCESS : ResponseMessageType.ABORT;
                 response = new ResponseMessage(responseMessageType, transaction.number);
             }
@@ -69,12 +66,10 @@ public class TransactionWorker extends Thread {
     // Receive and process messages from client
     @Override
     public void run() {
-        ObjectInputStream fromClient = null;
-        ObjectOutputStream toClient = null;
         boolean continueTransaction = false;
         try {
-            fromClient = new ObjectInputStream(socket.getInputStream());
             toClient = new ObjectOutputStream(socket.getOutputStream());
+            fromClient = new ObjectInputStream(socket.getInputStream());
             continueTransaction = true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -85,12 +80,17 @@ public class TransactionWorker extends Thread {
         while (continueTransaction) {
             try {
                 messageFromClient = (OpMessage) fromClient.readObject();
-
+                responseMessage = processOperation(messageFromClient);
+                if (messageFromClient.type() == OpMessageType.CLOSE_TRANSACTION){
+                    continueTransaction = false;
+                }
+                toClient.writeObject(responseMessage);
             } catch (Exception e) {
                 e.printStackTrace();
                 continueTransaction = false;
             }
         }
+
         // Enters a loop that
         // receives/processes messages (big switch statement)
         // determines transaction needs to be open

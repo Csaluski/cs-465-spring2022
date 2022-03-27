@@ -20,6 +20,8 @@ import java.io.IOException;
 public class Proxy {
     // Send messages to transaction server through this socket
     private Socket clientSocket;
+    private ObjectInputStream fromServer;
+    private ObjectOutputStream toServer;
     private int transactionID = -1;
 
     public Proxy(){
@@ -28,6 +30,8 @@ public class Proxy {
             Inet4Address serverAddr = (Inet4Address) Inet4Address.getByName(propReader.getProperty("SERVER_ADDR"));
             int serverPort = Integer.parseInt(propReader.getProperty("SERVER_PORT"));
             clientSocket = new Socket(serverAddr, serverPort);
+            fromServer = new ObjectInputStream(clientSocket.getInputStream());
+            toServer = new ObjectOutputStream(clientSocket.getOutputStream());
         } catch (Exception e) {
             System.out.println(e);
             return;
@@ -72,10 +76,9 @@ public class Proxy {
     // Handle message sending based on previous code.
     private void sendMessage(OpMessage opMessage){
         try {
-            ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
-            out.writeObject(opMessage);
+            toServer.writeObject(opMessage);
             System.out.println("DEBUG: " + opMessage.toString());
-            out.close();
+            toServer.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -83,14 +86,9 @@ public class Proxy {
 
     private void receiveMessage(){
         try {
-            ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
-            ResponseMessage responseMessage = (ResponseMessage) in.readObject();
+            ResponseMessage responseMessage = (ResponseMessage) fromServer.readObject();
             System.out.println("DEBUG: " + responseMessage.toString());
-            in.close();
-            clientSocket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
