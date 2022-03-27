@@ -7,4 +7,10 @@ public class Client {
         // Creates proxy.
         // Calls openTransaction() on the proxy.
     }
+
+    private void run(){
+        while(true){
+            new Thread(new ClientThread(13)).start();
+        }
+    }
 }
