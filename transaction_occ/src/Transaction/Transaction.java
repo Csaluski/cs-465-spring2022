@@ -1,6 +1,7 @@
 package Transaction;
 
 import Account.AccountManager;
+import Account.Account;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,11 +28,13 @@ public class Transaction {
 
     public int readAccount(int accountId) {
         Integer balance;
+        Account account;
 
         balance = writeSet.get(accountId);
 
         if (balance == null) {
-            AccountManager.accounts.get(accountId);
+            account = AccountManager.accounts.get(accountId);
+            balance = account.getBalance();
         }
 
         if (!readSet.contains(accountId)) {

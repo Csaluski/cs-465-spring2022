@@ -10,12 +10,13 @@ public class AccountManager {
     public final static Map<Integer, Account> accounts = new HashMap<Integer, Account>();
 
     public AccountManager(int numAccounts, int initBalance) {
-
+        for(int i = 0; i < numAccounts; i++) {
+            accounts.put(i, new Account(initBalance, i));
+        }
     }
 
     public int read(int accountID) {
-
-        return 0;
+        return accounts.get(accountID).getBalance();
     }
 
     public void write(int accountID, int amount) {

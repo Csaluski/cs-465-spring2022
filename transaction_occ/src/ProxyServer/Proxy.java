@@ -26,7 +26,7 @@ public class Proxy {
 
     public Proxy(){
         try {
-            PropertyHandler propReader = new PropertyHandler("server.properties");
+            PropertyHandler propReader = new PropertyHandler("src/config/Server.properties");
             Inet4Address serverAddr = (Inet4Address) Inet4Address.getByName(propReader.getProperty("SERVER_ADDR"));
             int serverPort = Integer.parseInt(propReader.getProperty("SERVER_PORT"));
             clientSocket = new Socket(serverAddr, serverPort);
@@ -47,10 +47,11 @@ public class Proxy {
     // return transaction ID
     // connect to App.Server.Server by using server port and ip
     // get transaction ID from transaction manager via stream
-    public void openTransaction(){
+    public int openTransaction(){
         OpMessage openMessage = new OpMessage(OpMessageType.OPEN_TRANSACTION, null);
         sendMessage(openMessage);
         receiveMessage();
+        return transactionID;
     }
 
     public void closeTransaction(){
@@ -78,7 +79,7 @@ public class Proxy {
         try {
             toServer.writeObject(opMessage);
             System.out.println("DEBUG: " + opMessage.toString());
-            toServer.close();
+            // toServer.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
