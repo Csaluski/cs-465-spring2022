@@ -10,8 +10,8 @@ public class AccountManager {
     public final static Map<Integer, Account> accounts = new HashMap<Integer, Account>();
 
     public AccountManager(int numAccounts, int initBalance) {
-        for(int i = 0; i < numAccounts; i++) {
-            accounts.put(i, new Account(initBalance, i));
+        for(int accountID = 0; accountID < numAccounts; accountID++) {
+            accounts.put(accountID, new Account(accountID, initBalance));
         }
     }
 
@@ -21,5 +21,12 @@ public class AccountManager {
 
     public void write(int accountID, int amount) {
         // Commit effects of validated transaction.
+    }
+
+    public int checkTotal()
+    {
+        return accounts.values().stream()
+                .mapToInt(acct -> acct.getBalance())
+                .sum();
     }
 }

@@ -7,6 +7,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+import static java.lang.Integer.valueOf;
+
 // Instances of this class are created when the TransactionManager accepts a new connection from a Proxy,
 // then this class takes the role of handling all communications with the proxy until the client
 // closes the transaction
@@ -47,8 +49,8 @@ public class TransactionWorker extends Thread {
             }
 
             case OPEN_TRANSACTION -> {
-                transactionManager.openTransaction(transaction);
-                response = new ResponseMessage(ResponseMessageType.OPEN, null);
+                int number = transactionManager.openTransaction(transaction);
+                response = new ResponseMessage(ResponseMessageType.OPEN, new Integer(number));
             }
             case CLOSE_TRANSACTION -> {
                 boolean validated = transactionManager.closeTransaction(transaction);
@@ -81,6 +83,7 @@ public class TransactionWorker extends Thread {
             try {
                 messageFromClient = (OpMessage) fromClient.readObject();
                 responseMessage = processOperation(messageFromClient);
+                System.out.println("Transaction #" + transaction.number + " conducting " + messageFromClient + ", response is " + responseMessage);
                 if (messageFromClient.type() == OpMessageType.CLOSE_TRANSACTION){
                     continueTransaction = false;
                 }

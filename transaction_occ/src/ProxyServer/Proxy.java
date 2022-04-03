@@ -1,9 +1,6 @@
 package ProxyServer;
 
-import Records.OpMessage;
-import Records.OpMessageType;
-import Records.Account;
-import Records.ResponseMessage;
+import Records.*;
 
 import PropertyHandler.PropertyHandler;
 
@@ -22,11 +19,11 @@ public class Proxy {
     private Socket clientSocket;
     private ObjectInputStream fromServer;
     private ObjectOutputStream toServer;
-    private int transactionID = -1;
+    private int transactionNumber = -1;
 
-    public Proxy(){
+    public Proxy() {
         try {
-            PropertyHandler propReader = new PropertyHandler("src/config/Server.properties");
+            PropertyHandler propReader = new PropertyHandler("./config/Client.properties");
             Inet4Address serverAddr = (Inet4Address) Inet4Address.getByName(propReader.getProperty("SERVER_ADDR"));
             int serverPort = Integer.parseInt(propReader.getProperty("SERVER_PORT"));
             clientSocket = new Socket(serverAddr, serverPort);
@@ -36,7 +33,7 @@ public class Proxy {
             System.out.println(e);
             return;
         }
-        
+
     }
 
     // private OpMessage makeMessage(OpMessageType){
@@ -47,50 +44,72 @@ public class Proxy {
     // return transaction ID
     // connect to App.Server.Server by using server port and ip
     // get transaction ID from transaction manager via stream
-    public int openTransaction(){
+    public int openTransaction() {
         OpMessage openMessage = new OpMessage(OpMessageType.OPEN_TRANSACTION, null);
         sendMessage(openMessage);
-        receiveMessage();
-        return transactionID;
+        ResponseMessage responseMessage = receiveMessage();
+        if (responseMessage != null)
+        {
+            transactionNumber = (int) responseMessage.contents();
+        }
+        return transactionNumber;
     }
 
-    public void closeTransaction(){
+    public boolean closeTransaction() {
+        boolean success = false;
         OpMessage closeMessage = new OpMessage(OpMessageType.CLOSE_TRANSACTION, null);
         sendMessage(closeMessage);
-        receiveMessage();
+        ResponseMessage responseMessage = receiveMessage();
+        if (responseMessage != null && responseMessage.type() == ResponseMessageType.SUCCESS)
+        {
+            success = true;
+        }
+        return success;
     }
 
     // Send read request to transaction worker through socket
-    public void read(int accountID){
+    public Account read(int accountID) {
         OpMessage readMessage = new OpMessage(OpMessageType.READ, accountID);
         sendMessage(readMessage);
-        receiveMessage();
+        ResponseMessage responseMessage = receiveMessage();
+        if (responseMessage != null)
+        {
+            return (Account)responseMessage.contents();
+        }
+        return null;
     }
 
     // Send write request to transaction worker through socket
-    public void write(int accountID, int amount){
+    public Account write(int accountID, int amount) {
         OpMessage writeMessage = new OpMessage(OpMessageType.WRITE, new Account(accountID, amount));
         sendMessage(writeMessage);
-        receiveMessage();
+        ResponseMessage responseMessage = receiveMessage();
+        if (responseMessage != null)
+        {
+            return (Account)responseMessage.contents();
+        }
+        return null;
     }
 
     // Handle message sending based on previous code.
-    private void sendMessage(OpMessage opMessage){
+    private void sendMessage(OpMessage opMessage) {
         try {
             toServer.writeObject(opMessage);
-            System.out.println("DEBUG: " + opMessage.toString());
+            System.out.println("DEBUG: Transaction #" + transactionNumber + " conducting " + opMessage.toString());
             // toServer.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void receiveMessage(){
+    private ResponseMessage receiveMessage() {
+        ResponseMessage responseMessage = null;
         try {
-            ResponseMessage responseMessage = (ResponseMessage) fromServer.readObject();
+            responseMessage = (ResponseMessage) fromServer.readObject();
             System.out.println("DEBUG: " + responseMessage.toString());
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return responseMessage;
     }
 }

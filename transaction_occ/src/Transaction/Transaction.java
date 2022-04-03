@@ -20,6 +20,7 @@ public class Transaction {
 
     void assignNumber(int number) {
         this.number = number;
+
     }
 
     void assignId(int id) {

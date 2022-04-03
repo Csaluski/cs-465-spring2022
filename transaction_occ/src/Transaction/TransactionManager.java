@@ -13,9 +13,10 @@ public class TransactionManager {
     static List<Transaction> transactions = new ArrayList<Transaction>();
     static AccountManager accountManager;
 
-    int transactionCounter = 0; // atomic counter used for assigning both #s and ids.
+    int transactionCounter = 1; // atomic counter used for assigning both #s and ids.
 
-    public TransactionManager() {
+    public TransactionManager(AccountManager accountManager) {
+        TransactionManager.accountManager = accountManager;
     }
 
     // Only one thread is allowed to be in this function at once.
@@ -27,9 +28,10 @@ public class TransactionManager {
 
     // Create a TransactionWorker
     // Send transaction ID to proxy via stream
-    public void openTransaction(Transaction transaction) {
+    public int openTransaction(Transaction transaction) {
         // Transaction ID is assigned in here.
         transaction.assignNumber(getNextTransactionCounter());
+        return transaction.number;
     }
 
     // May return with an abort or a commit.
@@ -39,7 +41,12 @@ public class TransactionManager {
         transaction.assignId(getNextTransactionCounter());
         boolean success = false;
         if (!checkConflict(transaction)) {
+            System.out.println("Transaction with ID " + transaction.id + " succeeded validation, committing");
             success = commit(transaction);
+            System.out.println("Total balance of all accounts is: $" + accountManager.checkTotal());
+        }
+        else {
+            System.out.println("Transaction with ID " + transaction.id + " failed validation, aborting");
         }
         return success;
     }
@@ -49,22 +56,30 @@ public class TransactionManager {
     private boolean checkConflict(Transaction transaction) {
         // Compare transaction against overlapping transactions to verify that there were no conflicts
         // this uses a Stream since it is a filter->map->reduce pattern
+        System.out.println("Validating transaction #" + transaction.number + " attempting to assign ID " + transaction.id);
+        System.out.println("Checking other transaction IDs between " + transaction.number + " and " + transaction.id);
         return transactions.parallelStream()
                 .filter(tran -> tran.id > transaction.number)
-                .anyMatch(tran -> checkConflict(tran, transaction));
+                .peek(tran -> System.out.println("Transaction with ID " + tran.id + " overlaps with validating #" + transaction.number + ", checking for conflict"))
+                .anyMatch(tran -> checkSingleConflict(tran, transaction));
     }
 
     // Determine if there is conflict by checking read/write sets to determine if transaction has conflicts.
-    private boolean checkConflict(Transaction previous, Transaction validating) {
+    private boolean checkSingleConflict(Transaction previous, Transaction validating) {
         boolean conflict = false;
         List<Integer> validatingReads = validating.readSet;
-        HashMap<Integer, Integer> previouseWrites = previous.writeSet;
+        HashMap<Integer, Integer> previousWrites = previous.writeSet;
 
         for (int acct : validatingReads){
-            if (previouseWrites.containsKey(acct)) {
+            if (previousWrites.containsKey(acct)) {
                 conflict = true;
+                System.out.println("Transaction ID " + validating.id + " conflicts with previous #" + previous.id + ", closing transaction with ABORT");
                 break;
             }
+        }
+        if (!conflict)
+        {
+            System.out.println("Transaction with ID " + validating.id + " does not conflict with transaction with ID " + previous.id);
         }
         return conflict;
     }

@@ -20,12 +20,12 @@ public class Server {
 
     public static void main(String[] args) throws IOException {
         // Server setup stuff.
-        PropertyHandler propReader = new PropertyHandler("src/config/Server.properties");
+        PropertyHandler propReader = new PropertyHandler("./config/Server.properties");
         int numAccounts = Integer.parseInt(propReader.getProperty("ACCOUNTS"));
         int initBalance = Integer.parseInt(propReader.getProperty("BALANCE"));
         int listenPort = Integer.parseInt(propReader.getProperty("SERVER_PORT"));
         accountManager = new AccountManager(numAccounts, initBalance);
-        transactionManager = new TransactionManager();
+        transactionManager = new TransactionManager(accountManager);
         listenSocket = new ServerSocket(listenPort);
 
         Server server = new Server();
