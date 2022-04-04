@@ -1,7 +1,6 @@
 package Client;
 
 import PropertyHandler.PropertyHandler;
-
 import java.io.IOException;
 
 public class Client {
@@ -11,7 +10,7 @@ public class Client {
         PropertyHandler propReader = new PropertyHandler("./config/Client.properties");
         int numClients = Integer.parseInt(propReader.getProperty("NUM_CLIENTS"));
 
-        for (int clientId = 0; clientId < numClients; clientId++){
+        for (int clientId = 0; clientId < numClients; clientId++) {
             new Thread(new ClientThread(clientId)).start();
         }
     }

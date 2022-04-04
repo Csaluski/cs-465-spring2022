@@ -2,10 +2,8 @@ package Server;
 
 import Account.AccountManager;
 import PropertyHandler.PropertyHandler;
-import Transaction.Transaction;
 import Transaction.TransactionManager;
 import Transaction.TransactionWorker;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -28,6 +26,7 @@ public class Server {
         transactionManager = new TransactionManager(accountManager);
         listenSocket = new ServerSocket(listenPort);
 
+        // Create and run server.
         Server server = new Server();
         server.run();
     }

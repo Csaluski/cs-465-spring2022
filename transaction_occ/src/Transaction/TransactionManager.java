@@ -2,19 +2,19 @@ package Transaction;
 
 import Account.Account;
 import Account.AccountManager;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// Spanws off a TransactionWorker thread.
+// Spawns off a TransactionWorker thread.
 public class TransactionManager {
     static List<Transaction> transactions = new ArrayList<Transaction>();
     static AccountManager accountManager;
 
     int transactionCounter = 1; // atomic counter used for assigning both #s and ids.
 
+    // Transaction manager constructor
     public TransactionManager(AccountManager accountManager) {
         TransactionManager.accountManager = accountManager;
     }
@@ -77,10 +77,12 @@ public class TransactionManager {
                 break;
             }
         }
+
         if (!conflict)
         {
             System.out.println("Transaction with ID " + validating.id + " does not conflict with transaction with ID " + previous.id);
         }
+
         return conflict;
     }
 
@@ -92,6 +94,7 @@ public class TransactionManager {
             Account updatedAccount = new Account(acct.getKey(), acct.getValue());
             AccountManager.accounts.put(acct.getKey(), updatedAccount);
         }
+
         transactions.add(transaction);
         return true;
     }

@@ -15,16 +15,7 @@ public class AccountManager {
         }
     }
 
-    public int read(int accountID) {
-        return accounts.get(accountID).getBalance();
-    }
-
-    public void write(int accountID, int amount) {
-        // Commit effects of validated transaction.
-    }
-
-    public int checkTotal()
-    {
+    public int checkTotal() {
         return accounts.values().stream()
                 .mapToInt(acct -> acct.getBalance())
                 .sum();

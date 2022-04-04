@@ -1,12 +1,9 @@
 package ProxyServer;
 
 import Records.*;
-
 import PropertyHandler.PropertyHandler;
-
 import java.net.Inet4Address;
 import java.net.Socket;
-
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.IOException;
@@ -21,6 +18,7 @@ public class Proxy {
     private ObjectOutputStream toServer;
     private int transactionNumber = -1;
 
+    // Proxy constructor, sets up proxy server to be used by the client
     public Proxy() {
         try {
             PropertyHandler propReader = new PropertyHandler("./config/Client.properties");
@@ -36,11 +34,6 @@ public class Proxy {
 
     }
 
-    // private OpMessage makeMessage(OpMessageType){
-
-    //     return null;
-    // }
-
     // return transaction ID
     // connect to App.Server.Server by using server port and ip
     // get transaction ID from transaction manager via stream
@@ -48,20 +41,20 @@ public class Proxy {
         OpMessage openMessage = new OpMessage(OpMessageType.OPEN_TRANSACTION, null);
         sendMessage(openMessage);
         ResponseMessage responseMessage = receiveMessage();
-        if (responseMessage != null)
-        {
+        if (responseMessage != null) {
             transactionNumber = (int) responseMessage.contents();
         }
         return transactionNumber;
     }
 
+    // construct and send close message, receive response
+    // check response, return success as boolean
     public boolean closeTransaction() {
         boolean success = false;
         OpMessage closeMessage = new OpMessage(OpMessageType.CLOSE_TRANSACTION, null);
         sendMessage(closeMessage);
         ResponseMessage responseMessage = receiveMessage();
-        if (responseMessage != null && responseMessage.type() == ResponseMessageType.SUCCESS)
-        {
+        if (responseMessage != null && responseMessage.type() == ResponseMessageType.SUCCESS) {
             success = true;
         }
         return success;
@@ -72,8 +65,7 @@ public class Proxy {
         OpMessage readMessage = new OpMessage(OpMessageType.READ, accountID);
         sendMessage(readMessage);
         ResponseMessage responseMessage = receiveMessage();
-        if (responseMessage != null)
-        {
+        if (responseMessage != null) {
             return (Account)responseMessage.contents();
         }
         return null;
@@ -84,14 +76,13 @@ public class Proxy {
         OpMessage writeMessage = new OpMessage(OpMessageType.WRITE, new Account(accountID, amount));
         sendMessage(writeMessage);
         ResponseMessage responseMessage = receiveMessage();
-        if (responseMessage != null)
-        {
+        if (responseMessage != null) {
             return (Account)responseMessage.contents();
         }
         return null;
     }
 
-    // Handle message sending based on previous code.
+    // Handle message sending based on previous code
     private void sendMessage(OpMessage opMessage) {
         try {
             toServer.writeObject(opMessage);
@@ -102,6 +93,7 @@ public class Proxy {
         }
     }
 
+    // Receive a response message from the server and parse it, output for debug
     private ResponseMessage receiveMessage() {
         ResponseMessage responseMessage = null;
         try {

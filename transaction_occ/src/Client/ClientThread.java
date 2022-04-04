@@ -2,7 +2,6 @@ package Client;
 
 import ProxyServer.Proxy;
 import java.util.Random;
-
 import PropertyHandler.PropertyHandler;
 import Records.Account;
 
@@ -12,6 +11,7 @@ public class ClientThread extends Thread {
     private int amount;
     Random rand;
 
+    // Client thread constructor, makes a bunch of random client threads and lets them loose
     ClientThread(int seed) {
         rand = new Random(seed);
         try {
@@ -27,15 +27,10 @@ public class ClientThread extends Thread {
         }
     }
 
-    // Setup for necessary proxy.
-    private void createProxy() {
-        
-    }
-
     public void run() {
         // Have proxy open a transaction
-        // send read request to proxy
-        // send write request to proxy
+        // Send read request to proxy
+        // Send write request to proxy
         // Have proxy close transaction
         int sleepDuration = rand.nextInt(5000);
         int transactionID;
