@@ -27,3 +27,4 @@ out/
 
 *sh/
 *.DS_Store
+/ApplicationServer/target/

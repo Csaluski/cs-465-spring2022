@@ -25,8 +25,10 @@ public class PlusOneClient implements MessageTypes{
     public PlusOneClient(String serverPropertiesFile) {
         try {
             properties = new PropertyHandler(serverPropertiesFile);
-            host = properties.getProperty("HOST");
-            System.out.println("[PlusOneClient.PlusOneClient] Host: " + host);
+//            host = properties.getProperty("HOST");
+//            System.out.println("[PlusOneClient.PlusOneClient] Host: " + host);
+            String name = properties.getProperty("NAME");
+            System.out.println("[PlusOneClient.PlusOneClient] Name: " + name);
             port = Integer.parseInt(properties.getProperty("PORT"));
             System.out.println("[PlusOneClient.PlusOneClient] Port: " + port);
         } catch (Exception ex) {
