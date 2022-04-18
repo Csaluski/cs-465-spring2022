@@ -41,11 +41,16 @@ public class Satellite extends Thread {
         // which later on will be sent to the server
         // ...
         try {
+            // read properties
+            // read and output name
             properties = new PropertyHandler(satellitePropertiesFile);
             String name = properties.getProperty("NAME");
             System.out.println("[satellite.Sattellite] NAME: " + name);
+            // read and output port
             int port = Integer.parseInt(properties.getProperty("PORT"));
             System.out.println("[satellite.Sattellite] Port: " + port);
+
+            // populate satelliteInfo object to send to server later
             satelliteInfo.setName(name);
             satelliteInfo.setPort(port);
         } catch (IOException ex) {
@@ -56,11 +61,16 @@ public class Satellite extends Thread {
         // other than satellites, the as doesn't have a human-readable name, so leave it out
         // ...
         try {
+            // read properties
+            // read and output host
             properties = new PropertyHandler(serverPropertiesFile);
             String appServerHost = properties.getProperty("HOST");
+            // read and output port
             System.out.println("[ApplicationServer] Host: " + appServerHost);
             int appServerPort = Integer.parseInt(properties.getProperty("PORT"));
             System.out.println("[ApplicationServer] Port: " + appServerPort);
+
+            // set serverInfo values
             serverInfo.setHost(appServerHost);
             serverInfo.setPort(appServerPort);
         } catch (IOException ex) {
@@ -71,11 +81,16 @@ public class Satellite extends Thread {
         // -------------------
         // ...
         try {
+            // read code server properties
+            // read and output host
             properties = new PropertyHandler(classLoaderPropertiesFile);
             String webServerHost = properties.getProperty("HOST");
             System.out.println("[WebServer] Host: " + webServerHost);
+            //read and output port
             int webServerPort = Integer.parseInt(properties.getProperty("PORT"));
             System.out.println("[WebServer] Port: " + webServerPort);
+
+            // create class loader
             classLoader = new HTTPClassLoader(webServerHost, webServerPort);
         } catch (IOException ex) {
             System.err.println(ex);
@@ -93,15 +108,15 @@ public class Satellite extends Thread {
         // register this satellite with the SatelliteManager on the server
         // ---------------------------------------------------------------
         // ...
-        
+        // cannot do this yet as this part is not implemented
         
         // create server socket
         // ---------------------------------------------------------------
         // ...
         ServerSocket listenSocket = null;
-        try{
+        try {
             listenSocket = new ServerSocket(satelliteInfo.getPort());
-        }catch (Exception ex) {
+        } catch (Exception ex) {
             System.err.println("Error starting satellite on port " + satelliteInfo.getPort());
             System.exit(1);
         }
@@ -110,8 +125,11 @@ public class Satellite extends Thread {
         // ---------------------------------------------------------------
         // ...
         while(true){
-            try{
+            try {
+                // get socket from listener
                 Socket socket = listenSocket.accept();
+
+                // start new thread for job request
                 (new SatelliteThread(socket, this)).start();
             } catch (IOException e) {
                 System.err.println(e);
@@ -128,6 +146,7 @@ public class Satellite extends Thread {
         ObjectOutputStream writeToNet = null;
         Message message = null;
 
+        // constructor
         SatelliteThread(Socket jobRequest, Satellite satellite) {
             this.jobRequest = jobRequest;
             this.satellite = satellite;
@@ -140,8 +159,11 @@ public class Satellite extends Thread {
             ObjectInputStream in = null;
             ObjectOutputStream out = null;
             try {
+                // object streams
                 in = new ObjectInputStream(jobRequest.getInputStream());
                 out = new ObjectOutputStream(jobRequest.getOutputStream());
+
+                // create job request message
                 message = (Message) in.readObject();
             } catch(IOException | ClassNotFoundException e) {
                 System.err.println(e);
@@ -152,14 +174,17 @@ public class Satellite extends Thread {
             
             // reading message
             // ...
-            
             switch (message.getType()) {
                 case JOB_REQUEST:
                     // processing job request
                     // ...
+
+                    // set up job request
                     Job job = (Job) message.getContent();
                     String toolName = job.getToolName();
                     Integer num = (Integer) job.getParameters();
+
+                    // try to run job (get name, calculate result, send result)
                     try {
                         Tool toolObject = satellite.getToolObject(toolName);
                         Integer result = (Integer) toolObject.go(num);
@@ -186,15 +211,18 @@ public class Satellite extends Thread {
     public Tool getToolObject(String toolClassString) throws UnknownToolException, ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchMethodException {
 
         Tool toolObject = null;
-        // ...
-        if((toolObject = toolsCache.get(toolClassString)) != null){
+
+        // if good to go because tool has been used before, return it right away
+        if((toolObject = toolsCache.get(toolClassString)) != null) {
             return toolObject;
         }
+
+        // load code dynamically if needed
         Class<?> toolClass = classLoader.findClass(toolClassString);
         try {
             toolObject = (Tool) toolClass.getDeclaredConstructor().newInstance();
             toolsCache.put(toolClassString, toolObject);
-        }catch (InvocationTargetException e) {
+        } catch (InvocationTargetException e) {
             System.err.println(e);
         }
         
