@@ -182,12 +182,12 @@ public class Satellite extends Thread {
                     // set up job request
                     Job job = (Job) message.getContent();
                     String toolName = job.getToolName();
-                    Integer num = (Integer) job.getParameters();
+                    Long num = (Long) job.getParameters();
 
                     // try to run job (get name, calculate result, send result)
                     try {
                         Tool toolObject = satellite.getToolObject(toolName);
-                        Integer result = (Integer) toolObject.go(num);
+                        Long result = (Long) toolObject.go(num);
                         out.writeObject(result);
                     } catch(UnknownToolException e) {
                         System.err.println(e);
