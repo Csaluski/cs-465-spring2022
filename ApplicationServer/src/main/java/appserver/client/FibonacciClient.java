@@ -27,10 +27,10 @@ public class FibonacciClient extends Thread implements MessageTypes {
     public FibonacciClient(String serverPropertiesFile, int i) {
         try {
             properties = new PropertyHandler(serverPropertiesFile);
-//            host = properties.getProperty("HOST");
-//            System.out.println("[FibonacciClientFibonacciClient] Host: " + host);
-            String name = properties.getProperty("NAME");
-            System.out.println("[FibonacciClient.FibonacciClient] Name: " + name);
+            host = properties.getProperty("HOST");
+            System.out.println("[FibonacciClientFibonacciClient] Host: " + host);
+//            String name = properties.getProperty("NAME");
+//            System.out.println("[FibonacciClient.FibonacciClient] Name: " + name);
             port = Integer.parseInt(properties.getProperty("PORT"));
             System.out.println("[FibonacciClient.FibonacciClient] Port: " + port);
         } catch (Exception ex) {
@@ -70,10 +70,8 @@ public class FibonacciClient extends Thread implements MessageTypes {
     }
 
     public static void main(String[] args) {
-        
-        for(int i=5;i>0;i--){
-            (new FibonacciClient("../../config/Satellite.Earth.properties", i)).start();
+        for(int i=48;i>0;i--){
+            (new FibonacciClient("../../config/Server.properties", i)).start();
         }
-        
     }  
 }

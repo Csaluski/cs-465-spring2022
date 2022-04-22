@@ -49,6 +49,9 @@ public class Satellite extends Thread {
             // read and output port
             int port = Integer.parseInt(properties.getProperty("PORT"));
             System.out.println("[satellite.Sattellite] Port: " + port);
+            
+            String host = "127.0.0.1";
+            System.out.println("[satellite.Sattellite] Host: " + host);
 
             // populate satelliteInfo object to send to server later
             satelliteInfo.setName(name);
@@ -108,7 +111,16 @@ public class Satellite extends Thread {
         // register this satellite with the SatelliteManager on the server
         // ---------------------------------------------------------------
         // ...
-        // cannot do this yet as this part is not implemented
+        Socket appServer = null;
+        ObjectOutputStream out = null;
+        try {
+            appServer = new Socket(serverInfo.getHost(), serverInfo.getPort());
+            Message message = new Message(REGISTER_SATELLITE, satelliteInfo);
+            out = new ObjectOutputStream(appServer.getOutputStream());
+            out.writeObject(message);
+        } catch(IOException e){
+            System.err.println(e);
+        }
         
         // create server socket
         // ---------------------------------------------------------------
@@ -211,20 +223,23 @@ public class Satellite extends Thread {
     public Tool getToolObject(String toolClassString) throws UnknownToolException, ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchMethodException {
 
         Tool toolObject = null;
+        synchronized(toolsCache) {
+            // if good to go because tool has been used before, return it right away
+            if((toolObject = toolsCache.get(toolClassString)) != null) {
+                System.out.println("Tool: \"" + toolClassString + "\" already in Cache");
+                return toolObject;
+            }
 
-        // if good to go because tool has been used before, return it right away
-        if((toolObject = toolsCache.get(toolClassString)) != null) {
-            return toolObject;
-        }
-
-        // load code dynamically if needed
-        Class<?> toolClass = classLoader.findClass(toolClassString);
-        try {
-            toolObject = (Tool) toolClass.getDeclaredConstructor().newInstance();
+            // load code dynamically if needed
+            Class<?> toolClass = classLoader.findClass(toolClassString);
+            try {
+                toolObject = (Tool) toolClass.getDeclaredConstructor().newInstance();
+            } catch (InvocationTargetException e) {
+                System.err.println(e);
+            }
             toolsCache.put(toolClassString, toolObject);
-        } catch (InvocationTargetException e) {
-            System.err.println(e);
         }
+        
         
         return toolObject;
     }
